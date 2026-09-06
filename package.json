@@ -1,6 +1,6 @@
 {
   "name": "sitebot-cli",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Fast terminal SEO checker",
   "author": "Abdelrahman Ragab",
   "keywords": [
@@ -13,7 +13,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Abdelrahman5243/sitebot-cli.git"
+    "url": "git+https://github.com/Abdelrahman5243/sitebot-cli.git"
   },
   "bugs": {
     "url": "https://github.com/Abdelrahman5243/sitebot-cli/issues"

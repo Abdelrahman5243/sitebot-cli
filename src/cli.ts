@@ -5,7 +5,7 @@ import { run } from "./app.js";
 new Command()
   .name("sitebot")
   .description("Fast terminal SEO checker")
-  .version("0.2.2")
+  .version("0.2.4")
   .argument("[url]", "website URL to inspect")
   .option("-b, --bot <profile>", "google or browser", "google")
   .option("-t, --timeout <seconds>", "request timeout", "10")
