@@ -2,6 +2,16 @@
   "name": "sitebot",
   "version": "0.1.0",
   "description": "Fast terminal SEO checker",
+  "keywords": ["seo", "geo", "audit", "cli", "website"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Abdelrahman5243/sitebot-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Abdelrahman5243/sitebot-cli/issues"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
   "type": "module",
   "bin": {
     "sitebot": "dist/cli.js"
@@ -11,7 +21,8 @@
     "build": "tsup src/cli.ts --format esm --clean",
     "start": "node dist/cli.js",
     "check": "tsc --noEmit",
-    "test": "node --import tsx --test test/*.test.ts"
+    "test": "node --import tsx --test test/*.test.ts",
+    "prepublishOnly": "npm run check && npm test && npm run build"
   },
   "engines": {
     "node": ">=22"
