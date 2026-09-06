@@ -22,6 +22,12 @@ Or run it once without installing globally:
 
 ```bash
 npx sitebot-cli https://example.com
+
+The package also exposes the `sitebot` command:
+
+```bash
+npx --package=sitebot-cli sitebot https://example.com
+```
 ```
 
 ## Quick start

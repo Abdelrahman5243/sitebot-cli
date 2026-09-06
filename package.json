@@ -1,6 +1,6 @@
 {
   "name": "sitebot-cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Fast terminal SEO checker",
   "author": "Abdelrahman Ragab",
   "keywords": [
@@ -25,7 +25,8 @@
   ],
   "type": "module",
   "bin": {
-    "sitebot": "dist/cli.js"
+    "sitebot": "dist/cli.js",
+    "sitebot-cli": "dist/cli.js"
   },
   "scripts": {
     "dev": "tsx src/cli.ts",
