@@ -2,6 +2,7 @@
   "name": "sitebot",
   "version": "0.1.0",
   "description": "Fast terminal SEO checker",
+  "author": "Abdelrahman Ragab",
   "keywords": ["seo", "geo", "audit", "cli", "website"],
   "license": "MIT",
   "repository": {
