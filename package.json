@@ -1,0 +1,31 @@
+{
+  "name": "sitebot",
+  "version": "0.1.0",
+  "description": "Fast terminal SEO checker",
+  "type": "module",
+  "bin": {
+    "sitebot": "dist/cli.js"
+  },
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "build": "tsup src/cli.ts --format esm --clean",
+    "start": "node dist/cli.js",
+    "check": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.7.0",
+    "cheerio": "^1.0.0-rc.12",
+    "commander": "^14.0.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
