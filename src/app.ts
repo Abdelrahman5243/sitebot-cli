@@ -1,4 +1,4 @@
-import { intro, outro } from "@clack/prompts";
+import { confirm, intro, isCancel, outro } from "@clack/prompts";
 import { getInput, type Options } from "./options.js";
 import { fetchPage } from "./http.js";
 import { fetchRobots } from "./robots-fetcher.js";
@@ -8,7 +8,7 @@ import { evaluateRobots } from "./robots.js";
 import { printJson, printQuiet, printTerminal } from "./report.js";
 import { checkSite } from "./site-checks.js";
 import { auditPages } from "./multi.js";
-import { renderPage } from "./render.js";
+import { hasBrowser, installBrowser, renderPage } from "./render.js";
 
 export async function run(url: string | undefined, raw: RawOptions) {
   const options: Options = {
@@ -27,6 +27,7 @@ export async function run(url: string | undefined, raw: RawOptions) {
     return;
   }
   const page = await fetchPage(input.url, input.bot, options.timeoutMs);
+  if (raw.render && !hasBrowser()) await prepareBrowser();
   const rawMetadata = parsePage(page.body, page.finalUrl),
     rendered = raw.render
       ? await renderPage(page.finalUrl, options.timeoutMs)
@@ -90,3 +91,5 @@ type RawOptions = {
   pages?: string;
   render?: boolean;
 };
+async function prepareBrowser() { const allowed = await askInstall(); if (!allowed) throw new Error('Render cancelled. Choose Yes to install Chromium.'); installBrowser(); }
+async function askInstall() { const answer = await confirm({ message: "Chromium is required for --render. Install it now (~200 MB)?", initialValue: true }); return !isCancel(answer) && answer; }

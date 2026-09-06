@@ -106,8 +106,9 @@ suitable for CI checks.
 sitebot fetches the HTML delivered by the server. It does not execute JavaScript,
 render a browser, or crawl the entire site automatically. Client-side content
 may therefore be absent from the raw report. Use `--render` to compare raw HTML
-with the browser-rendered DOM. Chromium is installed automatically on the first
-use of `--render`. To install it manually in advance, use:
+with the browser-rendered DOM. The first use of `--render` asks for confirmation
+with a Yes/No prompt; choose with the arrows or type `y`/`n`.
+To install it manually in advance, use:
 
 ```bash
 npx playwright install chromium
