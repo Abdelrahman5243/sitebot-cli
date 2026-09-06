@@ -9,6 +9,7 @@ structured data, content signals, and an SEO score.
 ## Requirements
 
 - Node.js 22 or newer
+- Chromium for `--render` mode
 
 ## Install
 
@@ -56,6 +57,7 @@ sitebot https://example.com --timeout 20
 sitebot https://example.com --json > report.json
 sitebot https://example.com --quiet --no-color
 sitebot https://example.com --pages "/,/about,/robots.txt"
+sitebot https://example.com --render
 ```
 
 ## What it checks
@@ -97,8 +99,12 @@ suitable for CI checks.
 
 sitebot fetches the HTML delivered by the server. It does not execute JavaScript,
 render a browser, or crawl the entire site automatically. Client-side content
-may therefore be absent from the report. Use server-side rendering or a future
-browser mode for pages that require JavaScript.
+may therefore be absent from the raw report. Use `--render` to compare raw HTML
+with the browser-rendered DOM; install Chromium once with:
+
+```bash
+npx playwright install chromium
+```
 
 ## Development
 
