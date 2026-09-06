@@ -13,14 +13,14 @@ structured data, content signals, and an SEO score.
 ## Install
 
 ```bash
-npm install -g sitebot
+npm install -g sitebot-cli
 sitebot https://example.com
 ```
 
 Or run it once without installing globally:
 
 ```bash
-npx sitebot https://example.com
+npx sitebot-cli https://example.com
 ```
 
 ## Quick start
