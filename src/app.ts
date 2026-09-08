@@ -1,95 +1,144 @@
-import { confirm, intro, isCancel, outro } from "@clack/prompts";
-import { getInput, type Options } from "./options.js";
-import { fetchPage } from "./http.js";
-import { fetchRobots } from "./robots-fetcher.js";
-import { parsePage } from "./parser.js";
-import { evaluateSeo } from "./seo.js";
-import { evaluateRobots } from "./robots.js";
-import { printJson, printQuiet, printTerminal } from "./report.js";
-import { checkSite } from "./site-checks.js";
-import { auditPages } from "./multi.js";
-import { hasBrowser, installBrowser, renderPage } from "./render.js";
+import { intro, log, outro, spinner } from "@clack/prompts";
+import pc from "picocolors";
+import { detectEnv } from "./env.js";
+import { Cancelled, resolveOptions, askYesNo, type Options, type RawOptions } from "./options.js";
+import { EXIT, UsageError, evaluateGate } from "./gate.js";
+import { runAudit, type Progress } from "./audit.js";
+import { printGate, printJson, printQuiet, printReport } from "./report.js";
+import { hasBrowser, installBrowser } from "./render.js";
+import type { CheckStatus, Report } from "./types.js";
 
 export async function run(url: string | undefined, raw: RawOptions) {
-  const options: Options = {
-    bot: raw.bot as Options["bot"],
-    timeoutMs: Number(raw.timeout) * 1000,
-    json: raw.json,
-    quiet: raw.quiet,
-    color: raw.color !== false,
-  };
-  if (!Number.isFinite(options.timeoutMs) || options.timeoutMs <= 0)
-    throw new Error("Timeout must be positive.");
-  if (!options.json && !options.quiet) intro("sitebot");
-  const input = await getInput(url, options.bot);
-  if (!input) {
-    process.exitCode = 1;
+  const env = detectEnv(raw.color !== false, raw.json, raw.quiet);
+  const verbose = !raw.json && !raw.quiet;
+
+  try {
+    if (verbose) intro(pc.bgCyan(pc.black(" sitebot ")));
+    const options = await resolveOptions(url, raw, env);
+    if (options.render) await ensureBrowser(env.interactive, raw.yes);
+
+    const { controller, stop } = watchForCancel(options.maxSeconds);
+    const progress = makeProgress(verbose);
+    let report: Report;
+    try {
+      report = await runAudit(options, controller.signal, progress);
+    } finally {
+      progress.done();
+      stop();
+    }
+
+    const gate = evaluateGate({
+      failOn: options.failOn,
+      minScore: options.minScore,
+      status: report.status,
+      score: scoreFor(report, options.focus),
+      // Only judge what was actually reported, so a narrow run cannot fail on
+      // checks the user never asked to see.
+      statuses: gatedStatuses(report, options.focus),
+      brokenLinks: report.links?.broken.length ?? 0,
+    });
+
+    emit(report, gate, options);
+    process.exitCode = gate.passed ? EXIT.ok : EXIT.threshold;
+  } catch (error) {
+    process.exitCode = handleError(error, verbose);
+  }
+}
+
+/** A crawl is judged on its own average, not the entry page alone. */
+function scoreFor(report: Report, focus: string): number {
+  const crawl = report.crawl?.report;
+  if (focus === "crawl" && crawl?.pages.length) return crawl.averageScore;
+  return report.seo.score;
+}
+
+function gatedStatuses(report: Report, focus: string) {
+  const statuses: CheckStatus[] = [];
+  const includes = (name: string) => focus === "full" || focus === name;
+
+  if (includes("basic")) statuses.push(...report.seo.checks.map((check) => check.status));
+  if (report.schema && includes("schema"))
+    statuses.push(...report.schema.issues.map((issue) => issue.severity));
+  if (report.vitalsChecks && includes("vitals"))
+    statuses.push(...report.vitalsChecks.map((check) => check.status));
+  if (report.crawl?.report && includes("crawl"))
+    statuses.push(...report.crawl.report.pages.map((page) => page.worstStatus));
+  return statuses;
+}
+
+function emit(report: Report, gate: ReturnType<typeof evaluateGate>, options: Options) {
+  if (options.json) {
+    printJson(report, gate);
     return;
   }
-  const page = await fetchPage(input.url, input.bot, options.timeoutMs);
-  if (raw.render && !hasBrowser()) await prepareBrowser();
-  const rawMetadata = parsePage(page.body, page.finalUrl),
-    rendered = raw.render
-      ? await renderPage(page.finalUrl, options.timeoutMs)
-      : null;
-  const metadata = rendered
-    ? parsePage(rendered.html, rendered.finalUrl)
-    : rawMetadata;
-  const seo = evaluateSeo(metadata),
-    robotsTxt = await fetchRobots(page.finalUrl, input.bot, options.timeoutMs);
-  const site = await checkSite(
-    page.finalUrl,
-    metadata,
-    input.bot,
-    options.timeoutMs,
-  );
-  const pages = raw.pages
-    ? await auditPages(page.finalUrl, raw.pages, input.bot, options.timeoutMs)
-    : undefined;
-  const report = {
-    ...page,
-    body: undefined,
-    bot: input.bot,
-    metadata,
-    rawMetadata,
-    rendered: rendered
-      ? {
-          finalUrl: rendered.finalUrl,
-          status: rendered.status,
-          responseTimeMs: rendered.responseTimeMs,
-          htmlSize: rendered.html.length,
-        }
-      : null,
-    seo,
-    site,
-    pages,
-    robotsTxt: {
-      url: robotsTxt.url,
-      status: robotsTxt.status,
-      error: robotsTxt.error,
-    },
-    robots: evaluateRobots(robotsTxt.body, page.finalUrl, input.bot),
-  };
-  if (options.json) printJson(report);
-  else if (options.quiet) printQuiet(seo.score);
-  else {
-    printTerminal(report, options.color);
-    outro("Fetch complete.");
+  if (options.quiet) {
+    printQuiet(report);
+    return;
   }
-  if (
-    page.status >= 400 ||
-    seo.checks.some((check) => check.status === "error")
-  )
-    process.exitCode = 1;
+  printReport(report, options.color, options.focus);
+  printGate(gate, pc.createColors(options.color));
+  outro(report.cancelled ? "Stopped early — partial report." : "Done.");
 }
-type RawOptions = {
-  bot: string;
-  timeout: string;
-  json?: boolean;
-  quiet?: boolean;
-  color?: boolean;
-  pages?: string;
-  render?: boolean;
-};
-async function prepareBrowser() { const allowed = await askInstall(); if (!allowed) throw new Error('Render cancelled. Choose Yes to install Chromium.'); installBrowser(); }
-async function askInstall() { const answer = await confirm({ message: "Chromium is required for --render. Install it now (~200 MB)?", initialValue: true }); return !isCancel(answer) && answer; }
+
+/** Aborts on Ctrl+C or when the overall time budget runs out. */
+function watchForCancel(maxSeconds: number) {
+  const controller = new AbortController();
+  const onSigint = () => controller.abort();
+  const timer = setTimeout(() => controller.abort(), maxSeconds * 1000);
+  process.once("SIGINT", onSigint);
+  return {
+    controller,
+    stop() {
+      clearTimeout(timer);
+      process.off("SIGINT", onSigint);
+    },
+  };
+}
+
+function makeProgress(verbose: boolean): Progress & { done: () => void } {
+  // Spinner frames would litter a redirected stream, so only animate on a TTY.
+  if (!verbose || !process.stdout.isTTY)
+    return { step: () => {}, update: () => {}, done: () => {} };
+  const spin = spinner();
+  let started = false;
+  return {
+    step(message) {
+      if (started) spin.message(message);
+      else {
+        spin.start(message);
+        started = true;
+      }
+    },
+    update(message) {
+      if (started) spin.message(message);
+    },
+    done() {
+      if (started) spin.stop("Analysis complete");
+    },
+  };
+}
+
+async function ensureBrowser(interactive: boolean, autoYes?: boolean) {
+  if (hasBrowser()) return;
+  if (!interactive && !autoYes)
+    throw new UsageError(
+      "Chromium is required for rendering. Install it with `npx playwright install chromium`, or pass --yes.",
+    );
+  const allowed = autoYes || (await askYesNo("Chromium is needed (~200 MB). Install it now?", true));
+  if (!allowed) throw new UsageError("Rendering needs Chromium. Re-run without --render or --vitals.");
+  log.info("Installing Chromium…");
+  installBrowser();
+}
+
+function handleError(error: unknown, verbose: boolean): number {
+  if (error instanceof Cancelled) return EXIT.cancelled;
+  if (error instanceof UsageError) {
+    if (verbose) log.error(error.message);
+    else console.error(`sitebot: ${error.message}`);
+    return EXIT.usage;
+  }
+  const message = error instanceof Error ? error.message : "Unexpected failure.";
+  if (verbose) log.error(message);
+  else console.error(`sitebot: ${message}`);
+  return EXIT.runtime;
+}

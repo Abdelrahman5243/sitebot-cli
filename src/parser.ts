@@ -1,11 +1,12 @@
-import { load } from "cheerio";
-import type { Metadata } from "./types.js";
+import { load, type CheerioAPI } from "cheerio";
+import type { Metadata, PageLink } from "./types.js";
 export function parsePage(html: string, baseUrl: string): Metadata {
   const $ = load(html),
     canonical = $('link[rel="canonical"]').first().attr("href") ?? null,
     openGraph: Record<string, string> = {},
     twitter: Record<string, string> = {},
-    jsonLd: string[] = [];
+    jsonLd: string[] = [],
+    jsonLdRaw: unknown[] = [];
   $('meta[property^="og:"]').each((_, e) => {
     const k = $(e).attr("property"),
       v = $(e).attr("content")?.trim();
@@ -20,12 +21,17 @@ export function parsePage(html: string, baseUrl: string): Metadata {
     try {
       const data = JSON.parse($(e).text()),
         list = Array.isArray(data) ? data : [data];
-      list.forEach((x) => x?.["@type"] && jsonLd.push(String(x["@type"])));
+      list.forEach((x) => {
+        if (!x) return;
+        jsonLdRaw.push(x);
+        if (x["@type"]) jsonLd.push(String(x["@type"]));
+      });
     } catch {
       /* invalid JSON-LD */
     }
   });
   const text = clean($("body").text());
+  const links = collectLinks($, baseUrl);
   return {
     title: clean($("title").first().text()) || null,
     description:
@@ -49,9 +55,36 @@ export function parsePage(html: string, baseUrl: string): Metadata {
     imageCount: $("img").length,
     imagesWithAlt: $("img[alt]").length,
     jsonLd,
+    jsonLdRaw,
+    links,
     clientRendered:
       $("#root").length > 0 && $("#root").text().trim().length === 0,
   };
+}
+
+/** Collects unique http(s) link targets, ignoring anchors and mailto/tel. */
+function collectLinks($: CheerioAPI, baseUrl: string): PageLink[] {
+  const seen = new Map<string, PageLink>();
+  $("a[href]").each((_, element) => {
+    const href = $(element).attr("href")?.trim();
+    if (!href || href.startsWith("#")) return;
+    let resolved: URL;
+    try {
+      resolved = new URL(href, baseUrl);
+    } catch {
+      return;
+    }
+    if (resolved.protocol !== "http:" && resolved.protocol !== "https:") return;
+    resolved.hash = "";
+    const url = resolved.toString();
+    if (seen.has(url)) return;
+    seen.set(url, {
+      url,
+      text: clean($(element).text()).slice(0, 80),
+      internal: resolved.origin === new URL(baseUrl).origin,
+    });
+  });
+  return [...seen.values()];
 }
 function clean(value: string) {
   return value.replace(/\s+/g, " ").trim();
