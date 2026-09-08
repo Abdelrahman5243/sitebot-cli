@@ -17,6 +17,8 @@ export type GateInput = {
   score: number;
   statuses: CheckStatus[];
   brokenLinks: number;
+  /** Set when the run was cut short, or asked for work it could not do. */
+  incomplete: string | null;
 };
 
 export type GateResult = { passed: boolean; reasons: string[] };
@@ -37,6 +39,7 @@ export function parseMinScore(value: string | undefined): number | null {
 
 export function evaluateGate(input: GateInput): GateResult {
   const reasons: string[] = [];
+  if (input.incomplete) reasons.push(input.incomplete);
   if (input.status >= 400) reasons.push(`HTTP ${input.status}`);
   if (input.minScore !== null && input.score < input.minScore)
     reasons.push(`score ${input.score} below minimum ${input.minScore}`);

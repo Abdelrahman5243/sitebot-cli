@@ -15,6 +15,8 @@ export type LinkResult = {
 export type LinkReport = {
   checked: number;
   broken: LinkResult[];
+  /** Timed out or refused connection: likely slow, not necessarily broken. */
+  unreachable: LinkResult[];
   redirects: LinkResult[];
   internalCount: number;
   externalCount: number;
@@ -52,9 +54,13 @@ export async function checkLinks(
     },
   );
 
+  // A timeout is not proof of breakage, so it is reported separately and does
+  // not fail the build.
+  const failed = results.filter((result) => !result.ok);
   return {
     checked: results.length,
-    broken: results.filter((result) => !result.ok),
+    broken: failed.filter((result) => result.status > 0),
+    unreachable: failed.filter((result) => result.status === 0),
     redirects: results.filter((result) => result.ok && result.redirected),
     internalCount: results.filter((result) => result.internal).length,
     externalCount: results.filter((result) => !result.internal).length,

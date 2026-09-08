@@ -1,7 +1,9 @@
-import { chromium, type Page } from "playwright";
+import { chromium, devices, type Browser, type Page } from "playwright";
 import { existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { OBSERVER_SCRIPT, readVitals, type Vitals } from "./vitals.js";
+
+export type Device = "mobile" | "desktop";
 
 export type RenderResult = {
   html: string;
@@ -10,6 +12,17 @@ export type RenderResult = {
   responseTimeMs: number;
   vitals: Vitals | null;
   consoleErrors: string[];
+};
+
+/**
+ * Lighthouse's mobile profile: a mid-tier phone on 4G. Without the CPU and
+ * network throttling a desktop machine reports times no real phone reaches.
+ */
+const MOBILE_CPU_THROTTLE = 4;
+const MOBILE_NETWORK = {
+  downloadThroughput: (1.6 * 1024 * 1024) / 8,
+  uploadThroughput: (750 * 1024) / 8,
+  latency: 150,
 };
 
 export function hasBrowser() {
@@ -24,11 +37,16 @@ export async function renderPage(
   url: string,
   timeoutMs: number,
   collectVitals: boolean,
+  device: Device = "desktop",
 ): Promise<RenderResult> {
   const start = performance.now();
   const browser = await chromium.launch({ headless: true });
   try {
-    const page = await browser.newPage();
+    const context = await browser.newContext(
+      device === "mobile" ? devices["Pixel 7"] : {},
+    );
+    const page = await context.newPage();
+    if (device === "mobile" && collectVitals) await throttle(page);
     const consoleErrors: string[] = [];
     const traffic = { requestCount: 0, transferBytes: 0 };
 
@@ -61,6 +79,17 @@ export async function renderPage(
   } finally {
     await browser.close();
   }
+}
+
+/** Applies phone-grade CPU and network limits through the CDP session. */
+async function throttle(page: Page) {
+  const session = await page.context().newCDPSession(page);
+  await session.send("Emulation.setCPUThrottlingRate", { rate: MOBILE_CPU_THROTTLE });
+  await session.send("Network.enable");
+  await session.send("Network.emulateNetworkConditions", {
+    offline: false,
+    ...MOBILE_NETWORK,
+  });
 }
 
 /** Gives late LCP candidates and layout shifts a brief window to land. */

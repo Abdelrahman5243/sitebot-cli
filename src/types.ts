@@ -64,6 +64,10 @@ export type Report = Omit<FetchResult, "body"> & {
     | undefined;
   vitals: import("./vitals.js").Vitals | null;
   vitalsChecks: import("./vitals.js").VitalsCheck[] | null;
+  deviceVitals: {
+    mobile: import("./vitals.js").Vitals | null;
+    desktop: import("./vitals.js").Vitals | null;
+  } | null;
   seo: SeoReport;
   site: import("./site-checks.js").SiteChecks;
   schema: import("./schema.js").SchemaReport | null;

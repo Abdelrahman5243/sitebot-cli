@@ -31,7 +31,9 @@ export async function runAudit(
   progress.step("Reading robots.txt");
   const robotsTxt = await fetchRobots(page.finalUrl, options.bot, options.timeoutMs);
 
-  const rendered = options.render ? await render(options, page.finalUrl, progress) : null;
+  const runs = options.render ? await renderAll(options, page.finalUrl, progress) : null;
+  // The desktop pass supplies the rendered HTML; both supply vitals.
+  const rendered = runs?.desktop ?? runs?.mobile ?? null;
   const metadata = rendered ? parsePage(rendered.html, rendered.finalUrl) : rawMetadata;
 
   progress.step("Checking site signals");
@@ -63,6 +65,12 @@ export async function runAudit(
     },
     vitals: rendered?.vitals ?? null,
     vitalsChecks: rendered?.vitals ? evaluateVitals(rendered.vitals) : null,
+    deviceVitals: runs
+      ? {
+          mobile: runs.mobile?.vitals ?? null,
+          desktop: runs.desktop?.vitals ?? null,
+        }
+      : null,
     seo: evaluateSeo(metadata),
     site,
     schema,
@@ -75,9 +83,17 @@ export async function runAudit(
   };
 }
 
-async function render(options: Options, url: string, progress: Progress) {
-  progress.step(options.vitals ? "Measuring Core Web Vitals" : "Rendering in Chromium");
-  return renderPage(url, options.timeoutMs, options.vitals);
+async function renderAll(options: Options, url: string, progress: Progress) {
+  if (!options.vitals) {
+    progress.step("Rendering in Chromium");
+    return { mobile: null, desktop: await renderPage(url, options.timeoutMs, false) };
+  }
+  // Sequential, not parallel: two throttled browsers would skew each other.
+  progress.step("Measuring Core Web Vitals (mobile)");
+  const mobile = await renderPage(url, options.timeoutMs, true, "mobile");
+  progress.step("Measuring Core Web Vitals (desktop)");
+  const desktop = await renderPage(url, options.timeoutMs, true, "desktop");
+  return { mobile, desktop };
 }
 
 async function runLinkCheck(

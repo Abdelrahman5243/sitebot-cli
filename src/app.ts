@@ -36,13 +36,29 @@ export async function run(url: string | undefined, raw: RawOptions) {
       // checks the user never asked to see.
       statuses: gatedStatuses(report, options.focus),
       brokenLinks: report.links?.broken.length ?? 0,
+      incomplete: incompleteReason(report, options),
     });
 
     emit(report, gate, options);
-    process.exitCode = gate.passed ? EXIT.ok : EXIT.threshold;
+    if (report.cancelled) process.exitCode = EXIT.cancelled;
+    else process.exitCode = gate.passed ? EXIT.ok : EXIT.threshold;
   } catch (error) {
     process.exitCode = handleError(error, verbose);
   }
+}
+
+/**
+ * Describes why a run could not finish what was asked of it. A partial or
+ * empty result must not be reported as a clean pass.
+ */
+function incompleteReason(report: Report, options: Options): string | null {
+  if (report.cancelled) return "run stopped before finishing";
+  if (options.crawl && !report.crawl?.report?.pages.length) {
+    const skipped = report.crawl?.report?.skipped.length ?? 0;
+    if (skipped) return `crawl found no reachable pages (${skipped} blocked by robots.txt)`;
+    return "crawl found no pages in any sitemap";
+  }
+  return null;
 }
 
 /** A crawl is judged on its own average, not the entry page alone. */

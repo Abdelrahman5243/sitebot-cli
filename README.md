@@ -124,13 +124,24 @@ server rejects `HEAD`. Internal links are checked by default; add
 sitebot https://example.com --vitals
 ```
 
-Measures LCP, CLS, TBT, FCP, and TTFB in a real Chromium page, alongside the
-request count, bytes transferred, and console errors. Each metric is graded
-against Google's good / needs-improvement / poor thresholds.
+Measures LCP, CLS, TBT, FCP, and TTFB on **both mobile and desktop**, shown side
+by side. Mobile is throttled to a mid-tier phone on 4G the way Lighthouse does
+it, because Google ranks on the mobile result and an unthrottled desktop run
+hides problems real visitors hit.
 
-These are lab measurements from your machine, so they reflect your network and
-CPU rather than what real users see. Chromium is required, and sitebot asks
-before downloading it.
+```text
+  ┌────────┬─────────────────┬────────────────┐
+  │ Metric │ Mobile          │ Desktop        │
+  ├────────┼─────────────────┼────────────────┤
+  │ LCP    │ ✓ 1360ms (good) │ ✓ 888ms (good) │
+  │ TBT    │ ✗ 1117ms (poor) │ ✓ 0ms (good)   │
+  └────────┴─────────────────┴────────────────┘
+```
+
+Each metric is graded against Google's good / needs-improvement / poor
+thresholds. These are lab measurements from your machine, so they reflect your
+own network rather than what real users see. Chromium is required, and sitebot
+asks before downloading it.
 
 ## Structured data
 

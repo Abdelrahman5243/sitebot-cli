@@ -172,3 +172,26 @@ test("a crawl still fails when its own pages have errors", () => {
   strictEqual(gate.passed, false);
   strictEqual(gate.reasons[0], "2 error checks");
 });
+
+test("table aligns columns around ANSI colour codes", async () => {
+  const { table, visibleWidth, stripAnsi } = await import("../src/table.js");
+  const esc = String.fromCharCode(27);
+  const green = `${esc}[32mOK${esc}[39m`;
+  strictEqual(visibleWidth(green), 2);
+  strictEqual(stripAnsi(green), "OK");
+
+  const output = table([{ header: "A" }, { header: "B" }], [[green, "longer"]]);
+  const lines = output.split("\n").map(stripAnsi);
+  const widths = new Set(lines.map((line) => line.length));
+  strictEqual(widths.size, 1, "every row is the same visible width");
+});
+
+test("table right-aligns numeric columns", async () => {
+  const { table, stripAnsi } = await import("../src/table.js");
+  const output = table(
+    [{ header: "Field" }, { header: "Value", align: "right" as const }],
+    [["Requests", "7"], ["Transferred", "856 KB"]],
+  );
+  const rows = output.split("\n").map(stripAnsi);
+  strictEqual(rows.some((row) => row.includes("│      7 │")), true);
+});
