@@ -195,3 +195,19 @@ test("table right-aligns numeric columns", async () => {
   const rows = output.split("\n").map(stripAnsi);
   strictEqual(rows.some((row) => row.includes("│      7 │")), true);
 });
+
+test("table shrinks to the terminal width", async () => {
+  const { table, stripAnsi } = await import("../src/table.js");
+  const previous = process.env.COLUMNS;
+  process.env.COLUMNS = "50";
+  try {
+    const output = table(
+      [{ header: "Field" }, { header: "Value" }],
+      [["URL", "https://example.com/a/very/long/path/that/keeps/going/and/going"]],
+    );
+    for (const line of output.split("\n")) strictEqual(stripAnsi(line).length <= 50, true);
+  } finally {
+    if (previous === undefined) delete process.env.COLUMNS;
+    else process.env.COLUMNS = previous;
+  }
+});

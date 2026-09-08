@@ -8,11 +8,15 @@ const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g");
  * so cells that already contain ANSI colour codes still line up.
  */
 export function table(columns: Column[], rows: string[][], indent = "  "): string {
-  const widths = columns.map((column, index) =>
+  const natural = columns.map((column, index) =>
     Math.max(
       visibleWidth(column.header),
       ...rows.map((row) => visibleWidth(row[index] ?? "")),
     ),
+  );
+  const widths = fit(natural, indent.length);
+  const body = rows.map((row) =>
+    row.map((cell, index) => truncate(cell ?? "", widths[index])),
   );
 
   const rule = (left: string, mid: string, right: string) =>
@@ -27,11 +31,38 @@ export function table(columns: Column[], rows: string[][], indent = "  "): strin
 
   return [
     rule("┌", "┬", "┐"),
-    renderRow(columns.map((column) => column.header)),
+    renderRow(columns.map((column, index) => truncate(column.header, widths[index]))),
     rule("├", "┼", "┤"),
-    ...rows.map(renderRow),
+    ...body.map(renderRow),
     rule("└", "┴", "┘"),
   ].join("\n");
+}
+
+/**
+ * Shrinks the widest column until the table fits the terminal. Narrowing the
+ * widest one keeps short columns readable instead of squeezing everything.
+ */
+function fit(widths: number[], indent: number): number[] {
+  const available = terminalWidth() - indent;
+  const chrome = widths.length * 3 + 1;
+  const result = [...widths];
+  let total = result.reduce((sum, width) => sum + width, 0) + chrome;
+
+  while (total > available) {
+    const widest = result.indexOf(Math.max(...result));
+    if (result[widest] <= 12) break;
+    result[widest]--;
+    total--;
+  }
+  return result;
+}
+
+function terminalWidth(): number {
+  // COLUMNS is respected so piped output still wraps to the real terminal.
+  const fromEnv = Number(process.env.COLUMNS);
+  if (Number.isFinite(fromEnv) && fromEnv > 0) return Math.max(40, fromEnv);
+  const columns = process.stdout.columns;
+  return Number.isFinite(columns) && columns ? Math.max(40, columns) : 100;
 }
 
 function pad(value: string, width: number, align: Align = "left"): string {
