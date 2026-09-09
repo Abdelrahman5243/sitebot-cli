@@ -43,3 +43,19 @@ green PR.
 Include the command you ran, what you expected, and what happened. If the site
 is public, the URL helps a lot — most bugs here are about how one specific site
 responds.
+
+## Cutting a release
+
+```bash
+npm run release          # patch: 1.3.0 -> 1.3.1
+npm run release minor    # 1.3.0 -> 1.4.0
+npm run release major    # 1.3.0 -> 2.0.0
+```
+
+The script refuses to run unless you are on a clean `master`, then verifies,
+bumps the version, tags, and pushes. It prints a link to create the GitHub
+release.
+
+Publishing the release triggers the rest automatically: npm publish with
+provenance, and moving the major tag (`v1`) so `uses: ...@v1` keeps resolving
+to the newest version.

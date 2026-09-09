@@ -54,7 +54,8 @@
     "start": "node dist/cli.js",
     "check": "tsc --noEmit",
     "test": "node --import tsx --test test/*.test.ts",
-    "prepublishOnly": "npm run check && npm test && npm run build"
+    "prepublishOnly": "npm run check && npm test && npm run build",
+    "release": "bash scripts/release.sh"
   },
   "publishConfig": {
     "access": "public"

@@ -23,3 +23,31 @@ jobs:
       - run: npm install -g npm@latest
       - run: npm ci
       - run: npm publish
+
+  # Keeps the major tag (v1) pointing at the newest release, so
+  # `uses: Abdelrahman5243/sitebot-cli@v1` always resolves.
+  major-tag:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Move the major tag
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          # Only move the tag for a normal vX.Y.Z release, never a prerelease.
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "$TAG is not a stable release tag; leaving the major tag alone."
+            exit 0
+          fi
+          major="${TAG%%.*}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f "$major" "$TAG"
+          git push -f origin "$major"
+          echo "Moved $major to $TAG"

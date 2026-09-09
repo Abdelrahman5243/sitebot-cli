@@ -1,0 +1,25 @@
+name: Version check
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  # Catches the easy mistake of tagging v1.4.0 while package.json still says
+  # 1.3.0, which would publish the wrong version or fail outright.
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Tag must match package.json
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          packaged="v$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$packaged" ]; then
+            echo "::error::Release tag $TAG does not match package.json ($packaged)."
+            echo "Bump the version with 'npm version <patch|minor|major>' and retag."
+            exit 1
+          fi
+          echo "$TAG matches package.json."
