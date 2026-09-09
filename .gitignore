@@ -1,3 +1,6 @@
 .codex
 node_modules
 dist
+# Personal release checklist, not part of the project
+RELEASE.md
+.notes

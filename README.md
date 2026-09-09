@@ -1,161 +1,254 @@
 # sitebot
 
-Fast, focused SEO and GEO auditing from your terminal.
+**Audit any website for SEO, GEO, Core Web Vitals, broken links, and structured
+data — from your terminal.**
 
-Give sitebot one URL and get a useful report in seconds: HTTP status, redirects,
-metadata, Open Graph, Twitter Cards, robots.txt, sitemap, llms.txt, hreflang,
-structured data, content signals, and an SEO score.
+[![npm version](https://img.shields.io/npm/v/sitebot-cli.svg)](https://www.npmjs.com/package/sitebot-cli)
+[![npm downloads](https://img.shields.io/npm/dm/sitebot-cli.svg)](https://www.npmjs.com/package/sitebot-cli)
+[![CI](https://github.com/Abdelrahman5243/sitebot-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/Abdelrahman5243/sitebot-cli/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/sitebot-cli.svg)](./LICENSE)
+[![node](https://img.shields.io/node/v/sitebot-cli.svg)](https://nodejs.org)
 
-## Requirements
+```bash
+npx sitebot-cli https://example.com
+```
 
-- Node.js 22 or newer
-- Chromium for `--render` mode
+No install, no config, no account.
+
+```text
+Overview
+  ┌───────────┬────────────────────────────┐
+  │ Field     │ Value                      │
+  ├───────────┼────────────────────────────┤
+  │ URL       │ https://example.com/       │
+  │ Status    │ 200 OK                     │
+  │ Response  │ 486ms                      │
+  │ Score     │ 88 / 100                   │
+  └───────────┴────────────────────────────┘
+
+SEO Checks
+  ┌───┬────────────────────────┬──────────────────────────────┐
+  │   │ Check                  │ Result                       │
+  ├───┼────────────────────────┼──────────────────────────────┤
+  │ ✓ │ Title                  │ Good length (40 characters). │
+  │ ✗ │ Description            │ Missing.                     │
+  │ ✓ │ Canonical              │ Tag is present.              │
+  │ ✓ │ H1                     │ Exactly one H1 found.        │
+  └───┴────────────────────────┴──────────────────────────────┘
+
+Core Web Vitals
+  ┌────────┬─────────────────┬────────────────┐
+  │ Metric │ Mobile          │ Desktop        │
+  ├────────┼─────────────────┼────────────────┤
+  │ LCP    │ ✓ 1360ms (good) │ ✓ 888ms (good) │
+  │ TBT    │ ✗ 1117ms (poor) │ ✓ 0ms (good)   │
+  │ CLS    │ ✓ 0 (good)      │ ✓ 0 (good)     │
+  └────────┴─────────────────┴────────────────┘
+```
+
+Run it with no arguments and it asks what to check:
+
+```bash
+npx sitebot-cli
+```
+
+## What it finds
+
+Things that quietly cost you traffic, and that a browser will not show you:
+
+- **Pages that serve bots something different from what you see.** A page
+  returning `200` in your browser can return `503` to Googlebot. sitebot uses a
+  real crawler user-agent, so you see what Google sees.
+- **Duplicate titles and descriptions across the site**, which only a crawl can
+  find.
+- **Mobile performance problems hidden by a fast desktop.** Google ranks on the
+  mobile result.
+- **Structured data that silently loses rich results** because a required
+  property is missing.
+- **Broken links**, including ones behind servers that reject `HEAD`.
 
 ## Install
+
+Run it directly, no install:
+
+```bash
+npx sitebot-cli https://example.com
+```
+
+Or install globally:
 
 ```bash
 npm install -g sitebot-cli
 sitebot https://example.com
 ```
 
-Or run it once without installing globally:
-
-```bash
-npx sitebot-cli https://example.com
-```
-
-The package also exposes the `sitebot` command:
-
-```bash
-npx --package=sitebot-cli sitebot https://example.com
-```
-
-## Quick start
-
-```bash
-sitebot https://example.com
-```
-
-Without a URL, sitebot opens prompts for the URL and bot profile:
-
-```bash
-sitebot
-```
+Requires Node.js 22+. Chromium is only needed for `--vitals`, and sitebot asks
+before downloading it.
 
 ## Options
 
 ```text
 -b, --bot <profile>       google or browser (default: google)
--t, --timeout <seconds>   request timeout (default: 10)
+-t, --timeout <seconds>   per-request timeout (default: 10)
+    --crawl               crawl the whole site from its sitemap
+    --limit <pages>       maximum pages to crawl (default: 100)
+    --concurrency <n>     parallel requests while crawling (default: 5)
+    --links               check every link on the page for breakage
+    --external-links      include links pointing to other domains
+    --vitals              measure Core Web Vitals on mobile and desktop
+    --render              audit the browser-rendered HTML
+    --no-schema           skip structured data validation
+    --fail-on <level>     never, error, or warning (default: error)
+    --min-score <score>   fail below this SEO score
+    --max-seconds <n>     overall time budget (default: 300)
+    --pages <paths>       audit comma-separated paths
+-y, --yes                 accept prompts (installs Chromium if needed)
     --json                print machine-readable JSON
     --quiet               print only the final score
-    --no-color             disable terminal colors
-    --pages <paths>        audit comma-separated paths
+    --no-color            disable terminal colors
 -V, --version             print the version
 -h, --help                show help
 ```
 
-Examples:
-
 ```bash
-sitebot https://example.com --bot browser
-sitebot https://example.com --timeout 20
+sitebot https://example.com --crawl --limit 50
+sitebot https://example.com --links --external-links
+sitebot https://example.com --vitals
+sitebot https://example.com --min-score 80 --fail-on warning
 sitebot https://example.com --json > report.json
-sitebot https://example.com --quiet --no-color
-sitebot https://example.com --pages "/,/about,/robots.txt"
-sitebot https://example.com --render
 ```
 
-## What it checks
+## Crawling a whole site
 
-### Page SEO
+`--crawl` reads `robots.txt` for `Sitemap:` entries, falls back to
+`/sitemap.xml` and `/sitemap_index.xml`, follows sitemap indexes, and audits
+every page it finds:
 
-- Title and meta description presence and length
-- Canonical URL
-- H1 count
-- Open Graph and Twitter Card tags
+```bash
+sitebot https://example.com --crawl --limit 100 --concurrency 5
+```
 
-### Technical GEO
+On top of the per-page checks it reports problems only a crawl can find:
+duplicate titles, duplicate descriptions, missing titles and descriptions, the
+lowest-scoring pages, and any page that errors.
 
-- robots.txt and whether the requested path is allowed
-- sitemap.xml and llms.txt availability
-- hreflang, HTML language, and viewport
-- JSON-LD schema types
-- Word count and image alt-text coverage
+sitebot stays inside the origin you gave it, skips paths that `robots.txt`
+disallows, honours `Crawl-delay`, and stops at `--limit` pages and
+`--max-seconds`. Ctrl+C ends the run and still prints the partial report.
 
-### HTTP
+## Broken links
 
-- Status and content type
-- Response time
-- Redirect chain
-- X-Robots-Tag, cache-control, language, and server headers
+```bash
+sitebot https://example.com --links
+```
+
+Every link is checked with `HEAD`, retrying with `GET` when a server rejects
+`HEAD`. Internal links are checked by default; add `--external-links` to
+include other domains. Links that time out are reported separately from links
+that are genuinely broken.
+
+## Core Web Vitals
+
+```bash
+sitebot https://example.com --vitals
+```
+
+Measures LCP, CLS, TBT, FCP, and TTFB on **both mobile and desktop**, shown side
+by side. Mobile is throttled to a mid-tier phone on 4G the way Lighthouse does
+it, because Google ranks on the mobile result and an unthrottled desktop run
+hides problems real visitors hit.
+
+These are lab measurements from your machine, so they reflect your own network
+rather than what real users see.
+
+## Structured data
+
+Validates every JSON-LD node — including nodes inside `@graph` — against the
+properties Google requires for rich results. Missing a required property is an
+error, missing a recommended one is a warning.
+
+## Using sitebot in CI
+
+sitebot exits non-zero when a gate fails, so it works as a quality gate:
+
+| Code | Meaning |
+| ---- | ----------------------------------------------- |
+| 0    | all checks passed |
+| 1    | a gate condition failed |
+| 2    | invalid usage |
+| 3    | runtime failure |
+| 130  | the run was cancelled or ran out of time |
+
+Prompts disable themselves when there is no TTY or when `CI` is set, so the same
+command works locally and in a pipeline.
+
+```yaml
+- name: SEO audit
+  run: npx sitebot-cli https://example.com --min-score 80 --fail-on error
+```
+
+`--fail-on error` (the default) fails on missing essentials, `--fail-on warning`
+also fails on recommendations, and `--fail-on never` reports without failing.
+
+### GitHub Action
+
+There is also an action, which writes a table to the job summary and exposes
+the score to later steps:
+
+```yaml
+- uses: Abdelrahman5243/sitebot-cli@v1
+  with:
+    url: https://example.com
+    min-score: "80"
+    crawl: "true"
+    links: "true"
+```
+
+| Input | Default | Description |
+| ---------------- | --------- | ------------------------------------------ |
+| `url` | required | The URL to audit |
+| `min-score` | — | Fail below this SEO score |
+| `fail-on` | `error` | `never`, `error`, or `warning` |
+| `crawl` | `false` | Crawl the whole site from its sitemap |
+| `limit` | `100` | Maximum pages to crawl |
+| `links` | `false` | Check every link for breakage |
+| `vitals` | `false` | Measure Core Web Vitals (downloads Chromium) |
+| `timeout` | `15` | Per-request timeout in seconds |
+| `max-seconds` | `300` | Overall time budget |
+| `report-path` | — | Write the full JSON report to this path |
+
+Outputs: `score`, `passed`, and `broken-links`.
+
+```yaml
+- uses: Abdelrahman5243/sitebot-cli@v1
+  id: seo
+  with:
+    url: https://example.com
+    fail-on: never
+- run: echo "Scored ${{ steps.seo.outputs.score }}"
+```
 
 ## Understanding the report
 
 `Meta Robots`, `X-Robots-Tag`, and `robots.txt` are different signals. A missing
-meta robots tag does not mean the page is blocked. The report displays them
-separately and evaluates the robots.txt rule for the requested path.
+meta robots tag does not mean the page is blocked. The report shows them
+separately and evaluates the `robots.txt` rule for the requested path.
 
-The score is a lightweight diagnostic score, not a Google ranking score. Warnings
-are recommendations; errors indicate missing or invalid essentials. A non-zero
-exit code is returned for HTTP failures or SEO errors, which makes JSON output
-suitable for CI checks.
+The score is a lightweight diagnostic score, not a Google ranking score.
+Warnings are recommendations; errors indicate missing or invalid essentials.
 
-## Limitations
+## Contributing
 
-sitebot fetches the HTML delivered by the server. It does not execute JavaScript,
-render a browser, or crawl the entire site automatically. Client-side content
-may therefore be absent from the raw report. Use `--render` to compare raw HTML
-with the browser-rendered DOM. The first use of `--render` asks for confirmation
-with a Yes/No prompt; choose with the arrows or type `y`/`n`.
-To install it manually in advance, use:
-
-```bash
-npx playwright install chromium
-```
-
-## Development
+Issues and pull requests are welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ```bash
 git clone https://github.com/Abdelrahman5243/sitebot-cli.git
 cd sitebot-cli
 npm install
-npm run dev -- https://example.com
-npm run check
 npm test
-npm run build
+npm run dev -- https://example.com
 ```
-
-## Project structure
-
-```text
-src/cli.ts             command entrypoint
-src/app.ts             application flow
-src/options.ts         validation and prompts
-src/http.ts            page fetch and redirects
-src/robots-fetcher.ts  robots.txt fetch
-src/parser.ts          HTML metadata extraction
-src/seo.ts             SEO checks and score
-src/robots.ts          robots.txt rule matching
-src/site-checks.ts     technical GEO checks
-src/multi.ts           small multi-page audit
-src/report.ts          terminal and JSON output
-src/types.ts           shared types
-```
-
-## Publishing
-
-```bash
-npm login
-npm whoami
-npm pack --dry-run
-npm publish
-```
-
-`prepublishOnly` automatically runs typecheck, tests, and the production build.
-Use `npm version patch`, `npm version minor`, or `npm version major` before a
-new release.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+[MIT](./LICENSE)

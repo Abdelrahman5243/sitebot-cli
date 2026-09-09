@@ -1,0 +1,77 @@
+name: sitebot audit
+description: Audit a site for SEO, GEO, Core Web Vitals, broken links, and structured data
+author: Abdelrahman Ragab
+
+branding:
+  icon: search
+  color: blue
+
+inputs:
+  url:
+    description: The URL to audit
+    required: true
+  min-score:
+    description: Fail when the SEO score is below this number (0-100)
+    required: false
+  fail-on:
+    description: never, error, or warning
+    required: false
+    default: error
+  crawl:
+    description: Crawl the whole site from its sitemap
+    required: false
+    default: "false"
+  limit:
+    description: Maximum pages to crawl
+    required: false
+    default: "100"
+  links:
+    description: Check every link on the page for breakage
+    required: false
+    default: "false"
+  vitals:
+    description: Measure Core Web Vitals (downloads Chromium)
+    required: false
+    default: "false"
+  timeout:
+    description: Per-request timeout in seconds
+    required: false
+    default: "15"
+  max-seconds:
+    description: Overall time budget in seconds
+    required: false
+    default: "300"
+  report-path:
+    description: Write the full JSON report to this path
+    required: false
+
+outputs:
+  score:
+    description: The SEO score out of 100
+    value: ${{ steps.audit.outputs.score }}
+  passed:
+    description: "true when every gate condition was met"
+    value: ${{ steps.audit.outputs.passed }}
+  broken-links:
+    description: Number of broken links found
+    value: ${{ steps.audit.outputs.broken-links }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run sitebot
+      id: audit
+      shell: bash
+      env:
+        SITEBOT_URL: ${{ inputs.url }}
+        SITEBOT_MIN_SCORE: ${{ inputs.min-score }}
+        SITEBOT_FAIL_ON: ${{ inputs.fail-on }}
+        SITEBOT_CRAWL: ${{ inputs.crawl }}
+        SITEBOT_LIMIT: ${{ inputs.limit }}
+        SITEBOT_LINKS: ${{ inputs.links }}
+        SITEBOT_VITALS: ${{ inputs.vitals }}
+        SITEBOT_TIMEOUT: ${{ inputs.timeout }}
+        SITEBOT_MAX_SECONDS: ${{ inputs.max-seconds }}
+        SITEBOT_REPORT_PATH: ${{ inputs.report-path }}
+        SITEBOT_ACTION_PATH: ${{ github.action_path }}
+      run: bash "${{ github.action_path }}/scripts/action.sh"
