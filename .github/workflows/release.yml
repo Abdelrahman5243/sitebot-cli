@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # Lets npm verify the workflow's identity for trusted publishing, so no
+      # long-lived token is needed.
       id-token: write
     steps:
       - uses: actions/checkout@v5
@@ -17,7 +19,7 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
           cache: npm
+      # Trusted publishing needs a newer npm than Node 22 ships with.
+      - run: npm install -g npm@latest
       - run: npm ci
-      - run: npm publish --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish
