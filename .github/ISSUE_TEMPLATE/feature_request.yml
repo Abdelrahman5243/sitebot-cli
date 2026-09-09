@@ -1,0 +1,17 @@
+name: Feature request
+description: Suggest a check or capability
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: What went wrong on a real site that sitebot did not catch?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What should sitebot do?
+    validations:
+      required: true

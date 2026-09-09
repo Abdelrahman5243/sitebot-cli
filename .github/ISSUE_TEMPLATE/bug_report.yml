@@ -1,0 +1,37 @@
+name: Bug report
+description: Something did not work the way you expected
+labels: [bug]
+body:
+  - type: input
+    id: command
+    attributes:
+      label: Command
+      description: The exact command you ran
+      placeholder: sitebot https://example.com --crawl --limit 50
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL
+      description: If the site is public, which URL did you audit?
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+      description: Paste the output. Add --json if that is easier to share.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `sitebot --version` and `node --version`
+    validations:
+      required: true
