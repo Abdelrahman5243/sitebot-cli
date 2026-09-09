@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sitebot — technical website auditing from your terminal</title>
+<meta name="description" content="Audit any website for SEO, GEO, Core Web Vitals, broken links, and structured data — from your terminal. npx sitebot-cli, no install required.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08090b;
+    --bg-raised: #101114;
+    --bg-card: #0d0e11;
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.16);
+    --text: #f2f2f4;
+    --text-dim: #9a9ba3;
+    --text-faint: #5c5d66;
+    --accent: #ffffff;
+    --accent-glow: rgba(124,124,255,0.35);
+    --violet: #8b7cf6;
+    --pass: #34d399;
+    --fail: #f87171;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "cv11", "ss01";
+    overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+
+  /* ambient glow background */
+  .glow {
+    position: fixed; top: -20%; left: 50%; transform: translateX(-50%);
+    width: 900px; height: 700px; pointer-events: none; z-index: 0;
+    background: radial-gradient(ellipse at center, var(--accent-glow) 0%, transparent 65%);
+    opacity: 0.5; filter: blur(40px);
+  }
+
+  /* nav */
+  nav {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(8,9,11,0.7);
+    backdrop-filter: blur(12px) saturate(1.2);
+    border-bottom: 1px solid var(--border);
+  }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; max-width: 1040px; }
+  .brand { font-weight: 600; font-size: 15px; color: var(--text); letter-spacing: -0.01em; display: flex; align-items: center; gap: 9px; }
+  .brand .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pass); box-shadow: 0 0 10px var(--pass); }
+  .navlinks { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .navlinks a { color: var(--text-dim); padding: 7px 14px; border-radius: 6px; transition: color 0.15s, background 0.15s; white-space: nowrap; }
+  .navlinks a:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+  .navlinks a.cta {
+    color: #0a0a0c; background: var(--text); font-weight: 500;
+  }
+  .navlinks a.cta:hover { background: #fff; }
+  .navlinks .link-text { display: none; }
+  @media (min-width: 640px) { .navlinks .link-text { display: inline; } }
+
+  /* hero */
+  header.hero { position: relative; z-index: 1; padding: 120px 0 64px; text-align: center; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--text-dim);
+    border: 1px solid var(--border); border-radius: 100px;
+    padding: 6px 14px 6px 6px; margin-bottom: 28px;
+    background: rgba(255,255,255,0.02);
+  }
+  .badge .pill { background: var(--violet); color: #fff; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px; }
+  h1 {
+    font-size: clamp(38px, 5.6vw, 60px); line-height: 1.08; margin: 0 0 22px;
+    font-weight: 700; letter-spacing: -0.03em;
+    background: linear-gradient(180deg, #ffffff 0%, #c8c9d6 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .sub { font-size: 19px; color: var(--text-dim); max-width: 580px; margin: 0 auto 40px; font-weight: 400; }
+  .sub b { color: var(--text); font-weight: 500; }
+
+  .hero-actions { display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 20px; border-radius: 8px; font-size: 14.5px; font-weight: 500;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s, border-color 0.15s;
+  }
+  .btn-primary {
+    background: var(--text); color: #0a0a0c; border: 1px solid var(--text);
+    box-shadow: 0 0 0 0 rgba(255,255,255,0);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px -8px rgba(255,255,255,0.25); }
+  .btn-ghost { background: rgba(255,255,255,0.03); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--border-hover); background: rgba(255,255,255,0.06); }
+
+  .cmd-box {
+    display: inline-flex; align-items: center; gap: 14px;
+    background: var(--bg-raised); border: 1px solid var(--border);
+    border-radius: 10px; padding: 13px 10px 13px 20px; margin: 8px auto 0;
+    font-family: var(--mono); font-size: 14.5px;
+  }
+  .cmd-box .prompt { color: var(--violet); }
+  .cmd-box code { color: var(--text); }
+  .cmd-box button {
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text-dim); font-size: 12px; padding: 6px 12px; cursor: pointer;
+    font-family: var(--sans); transition: color 0.15s, border-color 0.15s;
+  }
+  .cmd-box button:hover { border-color: var(--border-hover); color: var(--text); }
+
+  .stats { display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: center; margin-top: 48px; font-size: 13.5px; color: var(--text-faint); }
+  .stats span b { color: var(--text-dim); font-weight: 500; }
+
+  /* terminal showcase */
+  .showcase { position: relative; z-index: 1; }
+  .term {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; box-shadow: 0 40px 100px -30px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.02);
+  }
+  .term-bar { display: flex; align-items: center; gap: 8px; padding: 13px 18px; border-bottom: 1px solid var(--border); }
+  .term-bar .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.12); }
+  .term-bar .title { margin-left: 8px; font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
+  .term img { display: block; width: 100%; height: auto; max-height: 560px; object-fit: cover; object-position: top; }
+
+  /* sections */
+  section { position: relative; z-index: 1; padding: 100px 0; }
+  .section-head { text-align: center; max-width: 620px; margin: 0 auto 56px; }
+  .eyebrow { font-size: 13px; font-weight: 600; color: var(--violet); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
+  h2 { font-size: clamp(28px, 3.6vw, 38px); margin: 0 0 14px; letter-spacing: -0.02em; font-weight: 650; }
+  .section-lede { color: var(--text-dim); font-size: 16.5px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--bg-card); padding: 30px 28px; transition: background 0.2s; }
+  .card:hover { background: var(--bg-raised); }
+  .card .num { font-family: var(--mono); font-size: 12px; color: var(--text-faint); margin-bottom: 16px; display: block; }
+  .card h3 { font-size: 16px; margin: 0 0 10px; font-weight: 600; letter-spacing: -0.01em; }
+  .card p { font-size: 14.5px; color: var(--text-dim); margin: 0; line-height: 1.65; }
+  .card code { font-family: var(--mono); font-size: 12.5px; color: var(--violet); background: rgba(139,124,246,0.1); padding: 2px 6px; border-radius: 4px; }
+
+  /* findings */
+  .finding {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 28px 30px; margin-bottom: 16px;
+    display: grid; grid-template-columns: 1fr 260px; gap: 28px; align-items: center;
+  }
+  @media (max-width: 720px) { .finding { grid-template-columns: 1fr; } }
+  .finding h3 { font-size: 17px; margin: 0 0 10px; font-weight: 600; letter-spacing: -0.01em; }
+  .finding p { font-size: 14.5px; color: var(--text-dim); margin: 0; line-height: 1.65; }
+  .finding-code {
+    font-family: var(--mono); font-size: 12.5px; background: #0a0a0c;
+    border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px;
+    color: var(--text-dim); overflow-x: auto; white-space: pre; line-height: 1.8;
+  }
+  .finding-code .k { color: var(--violet); }
+  .finding-code .v { color: var(--fail); }
+  .finding-code .v2 { color: #fbbf24; }
+
+  /* CI */
+  .ci-block { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; align-items: stretch; }
+  @media (max-width: 800px) { .ci-block { grid-template-columns: 1fr; } }
+  pre.yaml {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 26px 28px; font-family: var(--mono); font-size: 13.5px; color: var(--text-dim);
+    overflow-x: auto; margin: 0; line-height: 1.85;
+  }
+  pre.yaml .k { color: var(--violet); }
+  pre.yaml .s { color: #86efac; }
+  .exit-panel {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 26px 28px;
+  }
+  .exit-panel .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 16px; }
+  .exitcodes { font-family: var(--mono); font-size: 13.5px; }
+  .exitcodes div { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .exitcodes div:last-child { border-bottom: none; }
+  .exitcodes span { color: var(--text-dim); font-family: var(--sans); font-size: 13.5px; }
+  .exitcodes b { color: var(--text); font-weight: 500; }
+
+  /* install */
+  .install-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .install-grid { grid-template-columns: 1fr; } }
+  .install-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 24px 26px; }
+  .install-card .label { font-size: 12.5px; color: var(--text-faint); margin-bottom: 12px; }
+  .install-card pre {
+    background: #0a0a0c; border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px; font-family: var(--mono); font-size: 13.5px; color: var(--text);
+    margin: 0; overflow-x: auto;
+  }
+  .install-card .prompt { color: var(--violet); }
+  .note { font-size: 13.5px; color: var(--text-faint); margin-top: 24px; text-align: center; }
+  .note code { font-family: var(--mono); color: var(--text-dim); }
+
+  /* final CTA */
+  .cta-final { text-align: center; padding: 120px 0 100px; }
+  .cta-final h2 { font-size: clamp(30px, 4vw, 42px); }
+
+  footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 40px 0; }
+  footer .wrap { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+
+  /* mobile: tighter vertical rhythm, no oversized padding to scroll past */
+  @media (max-width: 640px) {
+    header.hero { padding: 64px 0 40px; }
+    section { padding: 56px 0; }
+    .cta-final { padding: 72px 0 56px; }
+    .section-head { margin-bottom: 36px; }
+    .sub { font-size: 16.5px; }
+    .badge { font-size: 12px; padding: 5px 12px 5px 5px; }
+    .cmd-box { flex-wrap: wrap; justify-content: center; padding: 12px 14px; gap: 10px; }
+    .cmd-box code { font-size: 13px; word-break: break-all; }
+    .finding { padding: 22px 20px; }
+    .finding-code { font-size: 11.5px; }
+    pre.yaml, .exit-panel, .install-card { padding: 20px 18px; }
+    .card { padding: 24px 20px; }
+    footer .wrap { justify-content: center; text-align: center; }
+  }
+  footer .flinks { display: flex; gap: 22px; font-size: 14px; color: var(--text-dim); }
+  footer .flinks a:hover { color: var(--text); }
+  footer .made { font-size: 13.5px; color: var(--text-faint); }
+  footer .made a:hover { color: var(--text-dim); text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="glow"></div>
+
+<nav>
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span>sitebot</div>
+    <div class="navlinks">
+      <a class="link-text" href="#checks">What it checks</a>
+      <a class="link-text" href="#ci">CI</a>
+      <a class="link-text" href="https://www.npmjs.com/package/sitebot-cli">npm</a>
+      <a class="cta" href="https://github.com/Abdelrahman5243/sitebot-cli">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="badge"><span class="pill">v1.3</span> No install · no account · no config</div>
+    <h1>Find the website problems<br>your browser won't show you.</h1>
+    <p class="sub">Technical website auditing from your terminal — <b>SEO, GEO, performance, and structured data</b>, one page or an entire site, in seconds.</p>
+
+    <div class="hero-actions">
+      <div class="cmd-box">
+        <span class="prompt">❯</span>
+        <code id="cmd">npx sitebot-cli https://example.com</code>
+        <button onclick="copyCmd()" id="copyBtn">Copy</button>
+      </div>
+    </div>
+    <div class="hero-actions" style="margin-top: 6px;">
+      <a class="btn btn-ghost" href="https://github.com/Abdelrahman5243/sitebot-cli">
+        View source
+      </a>
+      <a class="btn btn-ghost" href="#ci">
+        See CI integration
+      </a>
+    </div>
+
+    <div class="stats">
+      <span><b>MIT</b> licensed</span>
+      <span><b>Node 22+</b></span>
+      <span><b>Zero</b> config</span>
+      <span><b>SLSA</b> provenance</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap showcase">
+  <div class="term">
+    <div class="term-bar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="title">sitebot https://vercel.com</span>
+    </div>
+    <img src="https://raw.githubusercontent.com/Abdelrahman5243/sitebot-cli/master/demo.gif" alt="sitebot auditing a site from the terminal — the interactive menu, followed by a full report of tables for metadata, SEO checks, technical GEO, and structured data" loading="lazy">
+  </div>
+</div>
+
+<section id="checks">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Coverage</div>
+      <h2>Six things a browser will never tell you</h2>
+      <p class="section-lede">Run from one command, or pick exactly what you need from the menu.</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <span class="num">01</span>
+        <h3>Page basics</h3>
+        <p>Title, description, canonical, H1, Open Graph, Twitter cards — length and presence checks, not just existence.</p>
+      </div>
+      <div class="card">
+        <span class="num">02</span>
+        <h3>AI crawler access</h3>
+        <p>Whether <code>GPTBot</code>, <code>ClaudeBot</code>, and <code>PerplexityBot</code> can read the page, and whether content only exists after JS hydration.</p>
+      </div>
+      <div class="card">
+        <span class="num">03</span>
+        <h3>Whole-site crawling</h3>
+        <p>Reads the sitemap, follows sitemap indexes, and surfaces duplicate titles and descriptions across every page.</p>
+      </div>
+      <div class="card">
+        <span class="num">04</span>
+        <h3>Broken links</h3>
+        <p>Checks every link with <code>HEAD</code>, falling back to <code>GET</code>. Timeouts are reported separately from real breakage.</p>
+      </div>
+      <div class="card">
+        <span class="num">05</span>
+        <h3>Core Web Vitals</h3>
+        <p>LCP, CLS, TBT, FCP, and TTFB on <strong>both mobile and desktop</strong> — mobile throttled to match Lighthouse.</p>
+      </div>
+      <div class="card">
+        <span class="num">06</span>
+        <h3>Structured data</h3>
+        <p>Validates JSON-LD — including nodes inside <code>@graph</code> — against what Google requires for rich results.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="finding">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Real audits</div>
+      <h2>Not hypothetical checks</h2>
+      <p class="section-lede">Two problems sitebot found on live sites — both invisible in a browser.</p>
+    </div>
+
+    <div class="finding">
+      <div>
+        <h3>200 to you, 503 to Google</h3>
+        <p>A pharmacy site's product page loaded fine in a browser but returned <code>503</code> to every crawler — Googlebot, GPTBot, ClaudeBot — because a prerender service was silently failing behind the scenes.</p>
+      </div>
+      <div class="finding-code"><span class="k">x-prerender-status:</span> <span class="v">FAIL-RENDER-ERROR</span>
+<span class="k">vary:</span> User-Agent
+<span class="k">status:</span> <span class="v">503</span></div>
+    </div>
+
+    <div class="finding">
+      <div>
+        <h3>Duplicate descriptions across a crawl</h3>
+        <p>A single-page check can't catch this — only a crawl can. The same meta description turned up on four different changelog pages of a live production site.</p>
+      </div>
+      <div class="finding-code">"The best way to deploy
+your Next.js site."
+<span class="v2">on 4 pages</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="ci">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Automation</div>
+      <h2>Built for CI</h2>
+      <p class="section-lede">A GitHub Action and clear exit codes turn an audit into a gate — catch a regression before it reaches production.</p>
+    </div>
+
+    <div class="ci-block">
+      <pre class="yaml">- <span class="k">uses</span>: Abdelrahman5243/sitebot-cli@v1
+  <span class="k">with</span>:
+    <span class="k">url</span>: <span class="s">https://example.com</span>
+    <span class="k">min-score</span>: <span class="s">"80"</span>
+    <span class="k">links</span>: <span class="s">"true"</span>
+    <span class="k">crawl</span>: <span class="s">"true"</span></pre>
+
+      <div class="exit-panel">
+        <div class="label">Exit codes</div>
+        <div class="exitcodes">
+          <div><span>All checks passed</span><b>0</b></div>
+          <div><span>Gate condition failed</span><b>1</b></div>
+          <div><span>Invalid usage</span><b>2</b></div>
+          <div><span>Runtime failure</span><b>3</b></div>
+          <div><span>Cancelled / timed out</span><b>130</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Get started</div>
+      <h2>Install</h2>
+      <p class="section-lede">Nothing to keep updated, nothing to sign into.</p>
+    </div>
+
+    <div class="install-grid">
+      <div class="install-card">
+        <div class="label">Run it once, no install</div>
+        <pre><span class="prompt">❯</span> npx sitebot-cli https://example.com</pre>
+      </div>
+      <div class="install-card">
+        <div class="label">Or install globally</div>
+        <pre><span class="prompt">❯</span> npm install -g sitebot-cli
+<span class="prompt">❯</span> sitebot https://example.com</pre>
+      </div>
+    </div>
+    <p class="note">Requires <code>Node.js 22+</code>. Chromium only downloads if you ask for <code>--vitals</code>, and sitebot asks first.</p>
+  </div>
+</section>
+
+<div class="cta-final">
+  <div class="wrap">
+    <h2>Run it on your own site.</h2>
+    <p class="sub" style="margin-bottom: 32px;">Takes under ten seconds. Nothing to configure.</p>
+    <div class="cmd-box">
+      <span class="prompt">❯</span>
+      <code>npx sitebot-cli https://your-site.com</code>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="flinks">
+      <a href="https://github.com/Abdelrahman5243/sitebot-cli">GitHub</a>
+      <a href="https://www.npmjs.com/package/sitebot-cli">npm</a>
+      <a href="https://github.com/Abdelrahman5243/sitebot-cli/blob/master/LICENSE">MIT License</a>
+    </div>
+    <div class="made">Built by <a href="https://github.com/Abdelrahman5243">Abdelrahman Ragab</a></div>
+  </div>
+</footer>
+
+<script>
+function copyCmd() {
+  var text = document.getElementById('cmd').textContent;
+  navigator.clipboard.writeText(text).then(function () {
+    var btn = document.getElementById('copyBtn');
+    var original = btn.textContent;
+    btn.textContent = 'Copied';
+    setTimeout(function () { btn.textContent = original; }, 1400);
+  });
+}
+</script>
+
+</body>
+</html>
