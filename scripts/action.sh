@@ -3,6 +3,16 @@
 # action inputs, then hands the JSON report to summarize.mjs.
 set -uo pipefail
 
+# Reject anything that is not a plain http(s) URL. Without this a value
+# starting with "-" would be read as a flag rather than a target.
+case "$SITEBOT_URL" in
+  http://* | https://*) ;;
+  *)
+    echo "::error::url must start with http:// or https://"
+    exit 2
+    ;;
+esac
+
 args=("$SITEBOT_URL" "--json" "--no-color")
 args+=("--fail-on" "${SITEBOT_FAIL_ON:-error}")
 args+=("--timeout" "${SITEBOT_TIMEOUT:-15}")
@@ -14,6 +24,12 @@ args+=("--max-seconds" "${SITEBOT_MAX_SECONDS:-300}")
 [ "${SITEBOT_VITALS:-false}" = "true" ] && args+=("--vitals" "--yes")
 
 report="${SITEBOT_REPORT_PATH:-${RUNNER_TEMP:-/tmp}/sitebot-report.json}"
+case "$report" in
+  *..*)
+    echo "::error::report-path must not contain '..'"
+    exit 2
+    ;;
+esac
 mkdir -p "$(dirname "$report")"
 
 # Runs the published package pinned to this action's version, so the action
