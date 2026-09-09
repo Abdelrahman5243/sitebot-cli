@@ -105,9 +105,20 @@ async function askWizard(
 ): Promise<Options> {
   const url = base.url || (await askUrl());
 
-  // If the user named any check on the command line, honour exactly that set.
+  // Any flag beyond the URL means the user knows what they want: run it as
+  // given rather than interrupting with a menu. Gate flags count too, since
+  // they only appear in scripted use.
   const chose =
-    raw.crawl || raw.links || raw.vitals || raw.render || raw.schema === false || raw.pages;
+    raw.crawl ||
+    raw.links ||
+    raw.externalLinks ||
+    raw.vitals ||
+    raw.render ||
+    raw.schema === false ||
+    raw.pages ||
+    raw.minScore !== undefined ||
+    raw.failOn !== "error" ||
+    raw.yes;
   if (chose) return { ...base, url };
 
   const focus = await askFocus();

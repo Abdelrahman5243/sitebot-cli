@@ -15,6 +15,8 @@ npx sitebot-cli https://example.com
 
 No install, no config, no account.
 
+![sitebot auditing a site from the terminal](https://raw.githubusercontent.com/Abdelrahman5243/sitebot-cli/master/demo.gif)
+
 ```text
 Overview
   ┌───────────┬────────────────────────────┐

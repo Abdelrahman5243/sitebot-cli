@@ -59,3 +59,15 @@ release.
 Publishing the release triggers the rest automatically: npm publish with
 provenance, and moving the major tag (`v1`) so `uses: ...@v1` keeps resolving
 to the newest version.
+
+## Regenerating the demo
+
+The README GIF is generated from a script, so it can be rebuilt whenever the
+output changes rather than re-recorded by hand.
+
+```bash
+npm run build
+vhs scripts/demo.tape
+```
+
+Needs [vhs](https://github.com/charmbracelet/vhs), `ttyd`, and `ffmpeg`.

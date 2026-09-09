@@ -4,3 +4,6 @@ dist
 # Personal release checklist, not part of the project
 RELEASE.md
 .notes
+
+# Temporary shim used only while recording the demo
+scripts/.demo-bin
