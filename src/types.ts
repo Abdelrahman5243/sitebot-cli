@@ -79,5 +79,6 @@ export type Report = Omit<FetchResult, "body"> & {
   pages?: import("./multi.js").PageAudit[];
   robotsTxt: { url: string; status: number; error: string | null };
   robots: RobotsCheck;
+  aiAccess: import("./robots.js").AgentAccess[];
   cancelled: boolean;
 };

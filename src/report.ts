@@ -28,6 +28,9 @@ export function printReport(r: Report, colorEnabled: boolean, focus = "full") {
     metadata(r, c);
     seoChecks(r, c);
     geoSection(r, c);
+  } else if (show("agents")) {
+    // The AI-crawler choice shows just that table, not the whole GEO section.
+    aiAccessTable(r, c, "AI Crawler Access");
   }
   if (r.schema && show("schema")) schemaSection(r, c);
   if (show("vitals") && (r.deviceVitals || r.vitalsChecks)) vitalsSection(r, c);
@@ -90,6 +93,28 @@ function geoSection(r: Report, c: Ink) {
     table(
       [{ header: "" }, { header: "Signal" }, { header: "Result" }],
       keys.map((key) => [icon(c, r.site[key].status), key, r.site[key].message]),
+    ),
+  );
+  aiAccessTable(r, c);
+}
+
+/** Which AI crawlers robots.txt lets through — the core GEO question. */
+function aiAccessTable(r: Report, c: Ink, title?: string) {
+  if (!r.aiAccess?.length) return;
+  if (title) heading(c, title);
+  else console.log();
+  console.log(
+    table(
+      [{ header: "" }, { header: "AI crawler" }, { header: "Access" }],
+      r.aiAccess.map((agent) => [
+        agent.status === "disallowed" ? c.red("✗") : icon(c, "pass"),
+        `${agent.name} (${agent.label})`,
+        agent.status === "disallowed"
+          ? c.red("blocked by robots.txt")
+          : agent.status === "unknown"
+            ? c.dim("no robots.txt rule")
+            : "allowed",
+      ]),
     ),
   );
 }

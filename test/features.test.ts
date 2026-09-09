@@ -211,3 +211,34 @@ test("table shrinks to the terminal width", async () => {
     else process.env.COLUMNS = previous;
   }
 });
+
+test("reports which AI crawlers robots.txt allows", async () => {
+  const { evaluateAiAccess } = await import("../src/robots.js");
+  const robots = [
+    "User-agent: *",
+    "Allow: /",
+    "",
+    "User-agent: GPTBot",
+    "Disallow: /",
+    "",
+    "User-agent: CCBot",
+    "Disallow: /private",
+  ].join("\n");
+
+  const access = evaluateAiAccess(robots, "https://example.com/article");
+  const byName = Object.fromEntries(access.map((a) => [a.name, a.status]));
+  strictEqual(byName.GPTBot, "disallowed", "named block is honoured");
+  strictEqual(byName.ClaudeBot, "allowed", "falls back to the wildcard group");
+  strictEqual(byName.CCBot, "allowed", "a rule on another path does not block this one");
+});
+
+test("adds custom agents without duplicating built-ins", async () => {
+  const { evaluateAiAccess } = await import("../src/robots.js");
+  const access = evaluateAiAccess(
+    "User-agent: *\nAllow: /",
+    "https://example.com/",
+    ["MyBot", "gptbot"],
+  );
+  strictEqual(access.filter((a) => a.name.toLowerCase() === "gptbot").length, 1);
+  strictEqual(access.some((a) => a.name === "MyBot"), true);
+});

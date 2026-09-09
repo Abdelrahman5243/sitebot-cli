@@ -1,7 +1,9 @@
 # sitebot
 
-**Audit any website for SEO, GEO, Core Web Vitals, broken links, and structured
-data — from your terminal.**
+**Find the website problems your browser does not show you.**
+
+Technical website auditing from the terminal — SEO, GEO, crawling, broken
+links, Core Web Vitals, and structured data.
 
 [![npm version](https://img.shields.io/npm/v/sitebot-cli.svg)](https://www.npmjs.com/package/sitebot-cli)
 [![npm downloads](https://img.shields.io/npm/dm/sitebot-cli.svg)](https://www.npmjs.com/package/sitebot-cli)
@@ -54,6 +56,22 @@ Run it with no arguments and it asks what to check:
 npx sitebot-cli
 ```
 
+## Start here
+
+Each step widens the net. Run the first one on any site you own and work down
+as you need more.
+
+```bash
+sitebot https://example.com                    # 1. audit one page
+sitebot https://example.com --crawl            # 2. audit the whole site
+sitebot https://example.com --links            # 3. find broken links
+sitebot https://example.com --vitals           # 4. measure performance
+sitebot https://example.com --min-score 80     # 5. gate a build on the result
+```
+
+Step 5 exits non-zero when the score drops, which is what turns sitebot into a
+[CI check](#using-sitebot-in-ci).
+
 ## What it finds
 
 Things that quietly cost you traffic, and that a browser will not show you:
@@ -100,6 +118,7 @@ before downloading it.
     --vitals              measure Core Web Vitals on mobile and desktop
     --render              audit the browser-rendered HTML
     --no-schema           skip structured data validation
+    --agents <names>      extra robots.txt user-agents to check
     --fail-on <level>     never, error, or warning (default: error)
     --min-score <score>   fail below this SEO score
     --max-seconds <n>     overall time budget (default: 300)
@@ -162,6 +181,29 @@ hides problems real visitors hit.
 
 These are lab measurements from your machine, so they reflect your own network
 rather than what real users see.
+
+## GEO — being readable by AI crawlers
+
+Generative Engine Optimization is whether ChatGPT, Claude, Perplexity, and
+Google's AI answers can actually read your pages. sitebot reports the signals
+that decide it:
+
+- **`llms.txt`** — the emerging convention for telling AI crawlers what your
+  site is and which pages matter.
+- **Content without JavaScript.** Most AI crawlers do not run JS. sitebot flags
+  a page whose text only appears after hydration, because those crawlers see an
+  empty shell.
+- **`robots.txt` rules for AI user-agents.** sitebot checks GPTBot,
+  OAI-SearchBot, ClaudeBot, PerplexityBot, Google-Extended, and CCBot by name,
+  so you know whether you are blocking them deliberately or by accident. Add
+  your own with `--agents "MyBot,SomeCrawler"`.
+- **Structured data**, which gives an answer engine facts it can quote instead
+  of prose it has to guess at.
+- **Language and `hreflang`**, so the right regional page is the one that gets
+  cited.
+
+These overlap with classic SEO on purpose: a page a search crawler cannot read
+is a page an answer engine cannot cite either.
 
 ## Structured data
 

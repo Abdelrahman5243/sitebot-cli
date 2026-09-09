@@ -24,6 +24,8 @@ export type Options = {
   minScore: number | null;
   maxSeconds: number;
   pages: string | null;
+  /** Extra robots.txt user-agents to report access for. */
+  agents: string[];
 };
 
 export type RawOptions = {
@@ -44,6 +46,7 @@ export type RawOptions = {
   failOn: string;
   minScore?: string;
   maxSeconds: string;
+  agents?: string;
   yes?: boolean;
 };
 
@@ -95,6 +98,7 @@ function fromFlags(url: string | undefined, raw: RawOptions, env: Env) {
     minScore: parseMinScore(raw.minScore),
     maxSeconds: clamp(raw.maxSeconds, "--max-seconds", 5, LIMITS.maxSeconds),
     pages: raw.pages ?? null,
+    agents: parseAgents(raw.agents),
   };
 }
 
@@ -144,6 +148,7 @@ async function askWizard(
       false,
     );
   }
+  if (focus === "agents") options.agents = await askAgents();
   return options;
 }
 
@@ -164,6 +169,7 @@ async function askFocus(): Promise<string> {
       { value: "basic", label: "Page basics", hint: "metadata, SEO, GEO" },
       { value: "schema", label: "Structured data", hint: "rich-result fields" },
       { value: "links", label: "Broken links", hint: "every link on the page" },
+      { value: "agents", label: "AI crawler access", hint: "can ChatGPT read this?" },
       { value: "crawl", label: "Crawl from sitemap", hint: "finds duplicates" },
       { value: "vitals", label: "Core Web Vitals", hint: "needs Chromium" },
     ],
@@ -199,6 +205,16 @@ async function askConcurrency(): Promise<number> {
   return unwrap(answer) as number;
 }
 
+/** Optional extra user-agents on top of the built-in AI crawler list. */
+async function askAgents(): Promise<string[]> {
+  const answer = await text({
+    message: "Any other user-agents to check? (comma-separated, or leave empty)",
+    placeholder: "MyBot, SomeCrawler",
+    defaultValue: "",
+  });
+  return parseAgents(String(unwrap(answer) ?? ""));
+}
+
 export async function askYesNo(message: string, initialValue: boolean): Promise<boolean> {
   const answer = await confirm({ message, initialValue });
   return unwrap(answer) as boolean;
@@ -232,6 +248,22 @@ function parseBot(value: string): BotProfile {
   if (value !== "google" && value !== "browser")
     throw new UsageError("--bot must be google or browser.");
   return value;
+}
+
+/** Splits `--agents "GPTBot,MyBot"` into names, rejecting anything unusable. */
+function parseAgents(value: string | undefined): string[] {
+  if (!value) return [];
+  const names = value
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
+  for (const name of names) {
+    if (!/^[A-Za-z0-9._~-]+$/.test(name))
+      throw new UsageError(
+        `--agents: "${name}" is not a valid user-agent token.`,
+      );
+  }
+  return names;
 }
 
 function clamp(value: string, flag: string, min: number, max: number): number {

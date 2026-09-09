@@ -2,7 +2,7 @@ import { fetchPage } from "./http.js";
 import { fetchRobots } from "./robots-fetcher.js";
 import { parsePage } from "./parser.js";
 import { evaluateSeo } from "./seo.js";
-import { evaluateRobots } from "./robots.js";
+import { evaluateAiAccess, evaluateRobots } from "./robots.js";
 import { checkSite } from "./site-checks.js";
 import { auditPages } from "./multi.js";
 import { collectSitemapUrls } from "./sitemap.js";
@@ -79,6 +79,7 @@ export async function runAudit(
     pages,
     robotsTxt: { url: robotsTxt.url, status: robotsTxt.status, error: robotsTxt.error },
     robots: evaluateRobots(robotsTxt.body, page.finalUrl, options.bot),
+    aiAccess: evaluateAiAccess(robotsTxt.body, page.finalUrl, options.agents),
     cancelled: signal.aborted,
   };
 }
