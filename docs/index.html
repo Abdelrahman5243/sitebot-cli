@@ -74,7 +74,8 @@
     border-bottom: 1px solid var(--border);
   }
   nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; max-width: 1040px; }
-  .brand { font-weight: 600; font-size: 15px; color: var(--text); letter-spacing: -0.01em; display: flex; align-items: center; gap: 9px; }
+  .brand { font-weight: 600; font-size: 15px; color: var(--text); letter-spacing: -0.01em; display: flex; align-items: center; gap: 9px; text-decoration: none; transition: opacity 0.15s; }
+  .brand:hover { opacity: 0.8; }
   .brand .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pass); box-shadow: 0 0 10px var(--pass); }
   .navlinks { display: flex; align-items: center; gap: 8px; font-size: 14px; }
   .navlinks a {
@@ -272,7 +273,7 @@
 
 <nav>
   <div class="wrap">
-    <div class="brand"><span class="dot"></span>sitebot</div>
+    <a class="brand" href="#" aria-label="sitebot home"><span class="dot"></span>sitebot</a>
     <div class="navlinks">
       <a class="link-text" href="#checks">What it checks</a>
       <a class="link-text" href="#ci">CI</a>
