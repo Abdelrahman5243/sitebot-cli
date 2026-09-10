@@ -56,18 +56,26 @@ Run it with no arguments and it asks what to check:
 npx sitebot-cli
 ```
 
+**Contents:** [Start here](#start-here) · [What it finds](#what-it-finds) ·
+[Install](#install) · [Options](#options) ·
+[Crawling a whole site](#crawling-a-whole-site) ·
+[Broken links](#broken-links) · [Core Web Vitals](#core-web-vitals) ·
+[GEO](#geo-being-readable-by-ai-crawlers) ·
+[Structured data](#structured-data) · [Using sitebot in CI](#using-sitebot-in-ci) ·
+[Contributing](#contributing)
+
 ## Start here
 
 Each step widens the net. Run the first one on any site you own and work down
 as you need more.
 
-```bash
-sitebot https://example.com                    # 1. audit one page
-sitebot https://example.com --crawl            # 2. audit the whole site
-sitebot https://example.com --links            # 3. find broken links
-sitebot https://example.com --vitals           # 4. measure performance
-sitebot https://example.com --min-score 80     # 5. gate a build on the result
-```
+| Step | Command |
+| --- | --- |
+| 1. Audit one page | `sitebot https://example.com` |
+| 2. Audit the whole site | `sitebot https://example.com --crawl` |
+| 3. Find broken links | `sitebot https://example.com --links` |
+| 4. Measure performance | `sitebot https://example.com --vitals` |
+| 5. Gate a build on the result | `sitebot https://example.com --min-score 80` |
 
 Step 5 exits non-zero when the score drops, which is what turns sitebot into a
 [CI check](#using-sitebot-in-ci).
