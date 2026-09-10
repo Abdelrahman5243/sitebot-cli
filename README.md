@@ -22,30 +22,33 @@ No install, no config, no account.
 
 ![sitebot auditing a site from the terminal](https://raw.githubusercontent.com/Abdelrahman5243/sitebot-cli/master/demo.gif)
 
-Example output
+### Example output
 
-Overview
+**Overview**
 
-Field| Value
-URL| "https://example.com/"
-Status| "200 OK"
-Response| "486ms"
-Score| 88 / 100
+| Field | Value |
+| --- | --- |
+| URL | `https://example.com/` |
+| Status | `200 OK` |
+| Response | `486ms` |
+| Score | 88 / 100 |
 
-SEO Checks
+**SEO Checks**
 
-Status| Check| Result
-✓| Title| Good length (40 characters).
-✗| Description| Missing.
-✓| Canonical| Tag is present.
-✓| H1| Exactly one H1 found.
+| Status | Check | Result |
+| --- | --- | --- |
+| ✓ | Title | Good length (40 characters). |
+| ✗ | Description | Missing. |
+| ✓ | Canonical | Tag is present. |
+| ✓ | H1 | Exactly one H1 found. |
 
-Core Web Vitals
+**Core Web Vitals**
 
-Metric| Mobile| Desktop
-LCP| ✓ 1360ms (good)| ✓ 888ms (good)
-TBT| ✗ 1117ms (poor)| ✓ 0ms (good)
-CLS| ✓ 0 (good)| ✓ 0 (good)
+| Metric | Mobile | Desktop |
+| --- | --- | --- |
+| LCP | ✓ 1360ms (good) | ✓ 888ms (good) |
+| TBT | ✗ 1117ms (poor) | ✓ 0ms (good) |
+| CLS | ✓ 0 (good) | ✓ 0 (good) |
 
 Run it with no arguments and it asks what to check:
 
