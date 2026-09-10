@@ -214,14 +214,30 @@
   /* install */
   .install-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 720px) { .install-grid { grid-template-columns: 1fr; } }
-  .install-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 24px 26px; }
+  .install-card { position: relative; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 24px 26px; }
   .install-card .label { font-size: 12.5px; color: var(--text-faint); margin-bottom: 12px; }
-  .install-card pre {
+  .code-block { position: relative; }
+  .install-card pre, .code-block pre {
     background: #0a0a0c; border: 1px solid var(--border); border-radius: 8px;
-    padding: 14px 16px; font-family: var(--mono); font-size: 13.5px; color: var(--text);
+    padding: 14px 42px 14px 16px; font-family: var(--mono); font-size: 13.5px; color: var(--text);
     margin: 0; overflow-x: auto;
   }
-  .install-card .prompt { color: var(--violet); }
+  .install-card .prompt, .code-block .prompt { color: var(--violet); }
+
+  /* icon-only copy button pinned to the top-right of a code block */
+  .copy-icon-btn {
+    position: absolute; top: 8px; right: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; padding: 0;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text-faint); cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .copy-icon-btn:hover { color: var(--text); border-color: var(--border-hover); background: rgba(255,255,255,0.08); }
+  .copy-icon-btn svg { display: block; }
+  .copy-icon-btn .check { display: none; color: var(--pass); }
+  .copy-icon-btn.copied .check { display: block; }
+  .copy-icon-btn.copied .copy { display: none; }
   .note { font-size: 13.5px; color: var(--text-faint); margin-top: 24px; text-align: center; }
   .note code { font-family: var(--mono); color: var(--text-dim); }
 
@@ -449,11 +465,13 @@ your Next.js site."
       <div class="install-card">
         <div class="label">Run it once, no install</div>
         <pre><span class="prompt">❯</span> npx sitebot-cli https://example.com</pre>
+        <button class="copy-icon-btn" aria-label="Copy command" type="button"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true" class="copy"><rect x="5.5" y="5.5" width="8" height="8" rx="1.3"/><path d="M3.5 10.5h-1a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v1" stroke-linecap="round"/></svg><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" class="check"><path d="M3 8.5 6.2 11.5 13 4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
       <div class="install-card">
         <div class="label">Or install globally</div>
         <pre><span class="prompt">❯</span> npm install -g sitebot-cli
 <span class="prompt">❯</span> sitebot https://example.com</pre>
+        <button class="copy-icon-btn" aria-label="Copy commands" type="button"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true" class="copy"><rect x="5.5" y="5.5" width="8" height="8" rx="1.3"/><path d="M3.5 10.5h-1a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v1" stroke-linecap="round"/></svg><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" class="check"><path d="M3 8.5 6.2 11.5 13 4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
     </div>
     <p class="note">Requires <code>Node.js 22+</code>. Chromium only downloads if you ask for <code>--vitals</code>, and sitebot asks first.</p>
@@ -466,7 +484,8 @@ your Next.js site."
     <p class="sub" style="margin-bottom: 32px;">Takes under ten seconds. Nothing to configure.</p>
     <div class="cmd-box">
       <span class="prompt">❯</span>
-      <code>npx sitebot-cli https://your-site.com</code>
+      <code id="cmd-final">npx sitebot-cli https://your-site.com</code>
+      <button onclick="copyText(this, document.getElementById('cmd-final').textContent)" id="copyBtnFinal">Copy</button>
     </div>
   </div>
 </div>
@@ -513,14 +532,35 @@ your Next.js site."
 
 <script>
 function copyCmd() {
-  var text = document.getElementById('cmd').textContent;
+  copyText(document.getElementById('copyBtn'), document.getElementById('cmd').textContent);
+}
+
+/**
+ * Copies raw command text (no leading prompt glyphs) and flashes feedback.
+ * Text-only buttons (hero, final CTA) swap their label; icon-only buttons
+ * (install cards) just toggle a .copied class that swaps copy/check icons.
+ */
+function copyText(btn, raw) {
+  var text = raw.replace(/^\s*\u276f\s*/gm, '').trim();
   navigator.clipboard.writeText(text).then(function () {
-    var btn = document.getElementById('copyBtn');
+    var isIconOnly = btn.classList.contains('copy-icon-btn');
     var original = btn.textContent;
-    btn.textContent = 'Copied';
-    setTimeout(function () { btn.textContent = original; }, 1400);
+    btn.classList.add('copied');
+    if (!isIconOnly) btn.textContent = 'Copied';
+    setTimeout(function () {
+      btn.classList.remove('copied');
+      if (!isIconOnly) btn.textContent = original;
+    }, 1400);
   });
 }
+
+/** Copy icon buttons: read the sibling <pre>'s text, ignoring the prompt glyph. */
+document.querySelectorAll('.copy-icon-btn').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var pre = btn.closest('.install-card, .code-block').querySelector('pre');
+    copyText(btn, pre.textContent);
+  });
+});
 </script>
 
 </body>
