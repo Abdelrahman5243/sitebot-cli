@@ -11,6 +11,9 @@ links, Core Web Vitals, and structured data.
 [![license](https://img.shields.io/npm/l/sitebot-cli.svg)](./LICENSE)
 [![node](https://img.shields.io/node/v/sitebot-cli.svg)](https://nodejs.org)
 
+[![Live demo](https://img.shields.io/badge/Live_demo-visit_site-8b7cf6?style=for-the-badge)](https://abdelrahman5243.github.io/sitebot-cli/)
+[![npm](https://img.shields.io/badge/npm-sitebot--cli-cb3837?style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/sitebot-cli)
+
 ```bash
 npx sitebot-cli https://example.com
 ```
@@ -107,29 +110,29 @@ before downloading it.
 
 ## Options
 
-```text
--b, --bot <profile>       google or browser (default: google)
--t, --timeout <seconds>   per-request timeout (default: 10)
-    --crawl               crawl the whole site from its sitemap
-    --limit <pages>       maximum pages to crawl (default: 100)
-    --concurrency <n>     parallel requests while crawling (default: 5)
-    --links               check every link on the page for breakage
-    --external-links      include links pointing to other domains
-    --vitals              measure Core Web Vitals on mobile and desktop
-    --render              audit the browser-rendered HTML
-    --no-schema           skip structured data validation
-    --agents <names>      extra robots.txt user-agents to check
-    --fail-on <level>     never, error, or warning (default: error)
-    --min-score <score>   fail below this SEO score
-    --max-seconds <n>     overall time budget (default: 300)
-    --pages <paths>       audit comma-separated paths
--y, --yes                 accept prompts (installs Chromium if needed)
-    --json                print machine-readable JSON
-    --quiet               print only the final score
-    --no-color            disable terminal colors
--V, --version             print the version
--h, --help                show help
-```
+| Flag | Description | Default |
+| --- | --- | --- |
+| `-b, --bot <profile>` | `google` or `browser` | `google` |
+| `-t, --timeout <seconds>` | Per-request timeout | `10` |
+| `--crawl` | Crawl the whole site from its sitemap | — |
+| `--limit <pages>` | Maximum pages to crawl | `100` |
+| `--concurrency <n>` | Parallel requests while crawling | `5` |
+| `--links` | Check every link on the page for breakage | — |
+| `--external-links` | Include links pointing to other domains | — |
+| `--vitals` | Measure Core Web Vitals on mobile and desktop | — |
+| `--render` | Audit the browser-rendered HTML | — |
+| `--no-schema` | Skip structured data validation | — |
+| `--agents <names>` | Extra `robots.txt` user-agents to check | — |
+| `--fail-on <level>` | `never`, `error`, or `warning` | `error` |
+| `--min-score <score>` | Fail below this SEO score | — |
+| `--max-seconds <n>` | Overall time budget | `300` |
+| `--pages <paths>` | Audit comma-separated paths | — |
+| `-y, --yes` | Accept prompts (installs Chromium if needed) | — |
+| `--json` | Print machine-readable JSON | — |
+| `--quiet` | Print only the final score | — |
+| `--no-color` | Disable terminal colors | — |
+| `-V, --version` | Print the version | — |
+| `-h, --help` | Show help | — |
 
 ```bash
 sitebot https://example.com --crawl --limit 50
@@ -216,12 +219,12 @@ error, missing a recommended one is a warning.
 sitebot exits non-zero when a gate fails, so it works as a quality gate:
 
 | Code | Meaning |
-| ---- | ----------------------------------------------- |
-| 0    | all checks passed |
-| 1    | a gate condition failed |
-| 2    | invalid usage |
-| 3    | runtime failure |
-| 130  | the run was cancelled or ran out of time |
+| --- | --- |
+| `0` | All checks passed |
+| `1` | A gate condition failed |
+| `2` | Invalid usage |
+| `3` | Runtime failure |
+| `130` | The run was cancelled or ran out of time |
 
 Prompts disable themselves when there is no TTY or when `CI` is set, so the same
 command works locally and in a pipeline.
@@ -249,7 +252,7 @@ the score to later steps:
 ```
 
 | Input | Default | Description |
-| ---------------- | --------- | ------------------------------------------ |
+| --- | --- | --- |
 | `url` | required | The URL to audit |
 | `min-score` | — | Fail below this SEO score |
 | `fail-on` | `error` | `never`, `error`, or `warning` |

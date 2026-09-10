@@ -111,6 +111,7 @@
     padding: 11px 20px; border-radius: 8px; font-size: 14.5px; font-weight: 500;
     transition: transform 0.15s, box-shadow 0.15s, background 0.15s, border-color 0.15s;
   }
+  .btn svg { flex-shrink: 0; }
   .btn-primary {
     background: var(--text); color: #0a0a0c; border: 1px solid var(--text);
     box-shadow: 0 0 0 0 rgba(255,255,255,0);
@@ -221,11 +222,21 @@
   .cta-final { text-align: center; padding: 120px 0 100px; }
   .cta-final h2 { font-size: clamp(30px, 4vw, 42px); }
 
-  footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 40px 0; }
-  footer .wrap { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 48px 0 40px; }
+  footer .fgrid { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 32px; }
+  footer .fcol .flabel { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 14px; }
+  footer .fcol { display: flex; flex-direction: column; gap: 10px; }
+  footer .fcol a { font-size: 14px; color: var(--text-dim); display: inline-flex; align-items: center; gap: 8px; }
+  footer .fcol a svg { flex-shrink: 0; opacity: 0.7; }
+  footer .fbottom {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border);
+  }
 
   /* mobile: tighter vertical rhythm, no oversized padding to scroll past */
   @media (max-width: 640px) {
+    .navlinks { gap: 4px; }
+    .navlinks a { padding: 7px 10px; font-size: 13.5px; }
     header.hero { padding: 64px 0 40px; }
     section { padding: 56px 0; }
     .cta-final { padding: 72px 0 56px; }
@@ -238,12 +249,14 @@
     .finding-code { font-size: 11.5px; }
     pre.yaml, .exit-panel, .install-card { padding: 20px 18px; }
     .card { padding: 24px 20px; }
-    footer .wrap { justify-content: center; text-align: center; }
+    footer .fgrid { justify-content: center; text-align: center; gap: 28px; }
+    footer .fcol { align-items: center; }
+    footer .fbottom { justify-content: center; text-align: center; }
   }
-  footer .flinks { display: flex; gap: 22px; font-size: 14px; color: var(--text-dim); }
-  footer .flinks a:hover { color: var(--text); }
+  footer .fcol a:hover { color: var(--text); }
   footer .made { font-size: 13.5px; color: var(--text-faint); }
-  footer .made a:hover { color: var(--text-dim); text-decoration: underline; }
+  footer .made a { color: var(--text-dim); }
+  footer .made a:hover { color: var(--text); text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -256,7 +269,7 @@
     <div class="navlinks">
       <a class="link-text" href="#checks">What it checks</a>
       <a class="link-text" href="#ci">CI</a>
-      <a class="link-text" href="https://www.npmjs.com/package/sitebot-cli">npm</a>
+      <a href="https://www.npmjs.com/package/sitebot-cli">npm</a>
       <a class="cta" href="https://github.com/Abdelrahman5243/sitebot-cli">GitHub</a>
     </div>
   </div>
@@ -277,10 +290,12 @@
     </div>
     <div class="hero-actions" style="margin-top: 6px;">
       <a class="btn btn-ghost" href="https://github.com/Abdelrahman5243/sitebot-cli">
-        View source
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        Star on GitHub
       </a>
-      <a class="btn btn-ghost" href="#ci">
-        See CI integration
+      <a class="btn btn-ghost" href="https://www.npmjs.com/package/sitebot-cli">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 3h16v10H8v1.5H5.5V13H0V3Zm1.5 1.5v7h2.5v-5.5H6.5v5.5H8v-7H1.5Zm7.5 0v7h1.5v-5.5h2v5.5H14v-7H9Z"/></svg>
+        View on npm
       </a>
     </div>
 
@@ -441,12 +456,41 @@ your Next.js site."
 
 <footer>
   <div class="wrap">
-    <div class="flinks">
-      <a href="https://github.com/Abdelrahman5243/sitebot-cli">GitHub</a>
-      <a href="https://www.npmjs.com/package/sitebot-cli">npm</a>
-      <a href="https://github.com/Abdelrahman5243/sitebot-cli/blob/master/LICENSE">MIT License</a>
+    <div class="fgrid">
+      <div class="fcol">
+        <div class="flabel">Project</div>
+        <a href="https://github.com/Abdelrahman5243/sitebot-cli">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+          GitHub
+        </a>
+        <a href="https://www.npmjs.com/package/sitebot-cli">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 3h16v10H8v1.5H5.5V13H0V3Zm1.5 1.5v7h2.5v-5.5H6.5v5.5H8v-7H1.5Zm7.5 0v7h1.5v-5.5h2v5.5H14v-7H9Z"/></svg>
+          npm
+        </a>
+        <a href="https://github.com/Abdelrahman5243/sitebot-cli/blob/master/LICENSE">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8.75.75a.75.75 0 0 0-1.5 0V2h-.984c-.305 0-.604.08-.869.23l-1.288.737A.25.25 0 0 1 3.984 3H1.75a.75.75 0 0 0 0 1.5h.428L.066 8.51a.75.75 0 0 0 .154.849l.53-.53-.53.53.001.002.002.002.005.005.013.012.04.036a3.3 3.3 0 0 0 .543.38c.361.207.895.436 1.6.436a3.9 3.9 0 0 0 1.6-.436 3.3 3.3 0 0 0 .543-.38l.04-.036.013-.012.005-.005.002-.002.001-.002-.53-.53.53.53a.75.75 0 0 0 .154-.849L2.822 4.5h.162c.305 0 .604-.08.869-.23L5.14 3.534A.25.25 0 0 1 5.266 3.5h1.984v10.19c-1.11.116-2.11.494-2.804.98-.26.183-.51.435-.51.78 0 .646.87 1.05 1.5 1.05h4.128c.63 0 1.5-.404 1.5-1.05 0-.345-.25-.597-.51-.78-.694-.486-1.694-.864-2.804-.98V3.5h1.984c.045 0 .089.012.127.034l1.287.737c.265.15.564.23.869.23h.162l-2.606 4.51a.75.75 0 0 0 .154.849l.53-.53-.53.53.001.002.002.002.005.005.013.012.04.036a3.3 3.3 0 0 0 .543.38c.361.207.895.436 1.6.436a3.9 3.9 0 0 0 1.6-.436 3.3 3.3 0 0 0 .543-.38l.04-.036.013-.012.005-.005.002-.002.001-.002-.53-.53.53.53a.75.75 0 0 0 .154-.849L13.822 4.5h.428a.75.75 0 0 0 0-1.5h-2.234a.25.25 0 0 1-.127-.034L10.6 2.23A1.75 1.75 0 0 0 9.734 2H8.75V.75Z"/></svg>
+          MIT License
+        </a>
+      </div>
+      <div class="fcol">
+        <div class="flabel">Author</div>
+        <a href="https://github.com/Abdelrahman5243">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+          Abdelrahman Ragab
+        </a>
+        <a href="https://linkedin.com/in/abdelrahman-ragab-9443b8264">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M13.5 0h-11A2.5 2.5 0 0 0 0 2.5v11A2.5 2.5 0 0 0 2.5 16h11a2.5 2.5 0 0 0 2.5-2.5v-11A2.5 2.5 0 0 0 13.5 0ZM5 13.5H2.5V6H5v7.5Zm-1.25-8.6a1.35 1.35 0 1 1 0-2.7 1.35 1.35 0 0 1 0 2.7ZM13.5 13.5H11v-4.3c0-1.03-.02-2.35-1.43-2.35-1.44 0-1.66 1.12-1.66 2.28v4.37H5.4V6h2.4v1.02h.03c.34-.63 1.15-1.3 2.36-1.3 2.53 0 3.3 1.62 3.3 3.98v4.8Z"/></svg>
+          LinkedIn
+        </a>
+        <a href="https://abdelrahman-ragab-portfolio-ten.vercel.app/">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0ZM1.5 8c0-.5.06-.98.16-1.45l2.6 2.6v.85a1.5 1.5 0 0 0 1.5 1.5v1.29a6.51 6.51 0 0 1-4.26-4.79ZM8 14.5a6.47 6.47 0 0 1-1.36-.15v-1.63a1.5 1.5 0 0 0-1.5-1.5v-.71l3.71-3.71a1.06 1.06 0 0 1 1.5 0l.71.71-2.65 2.65 1.06 1.06 3.32-3.32a6.51 6.51 0 0 1-4.79 6.6Zm4.61-8.32-.9-.9a1.06 1.06 0 0 0-1.5 0l-.35.35-1.41-1.41.35-.36a2.56 2.56 0 0 1 3.62 0l.9.9c.2.2.31.44.35.71l-1.06 1.06a1.05 1.05 0 0 0-.99-.35Z"/></svg>
+          Portfolio
+        </a>
+      </div>
     </div>
-    <div class="made">Built by <a href="https://github.com/Abdelrahman5243">Abdelrahman Ragab</a></div>
+    <div class="fbottom">
+      <span class="made">MIT Licensed · Built by <a href="https://github.com/Abdelrahman5243">Abdelrahman Ragab</a></span>
+    </div>
   </div>
 </footer>
 
