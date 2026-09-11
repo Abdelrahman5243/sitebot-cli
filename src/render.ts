@@ -62,9 +62,26 @@ export async function renderPage(
 
     if (collectVitals) await page.addInitScript(OBSERVER_SCRIPT);
 
-    // `load` rather than `networkidle`: sites with polling or analytics never
-    // go idle, and a timeout there would lose the whole measurement.
-    const response = await page.goto(url, { waitUntil: "load", timeout: timeoutMs });
+    // Do not wait for the full `load` event here. Third-party analytics and ad
+    // requests can keep it pending even after the document is usable, causing
+    // an otherwise valid audit to fail at the per-request timeout. The settle
+    // window below still gives late paint candidates time to land for vitals.
+    let response: Awaited<ReturnType<Page["goto"]>> = null;
+    try {
+      response = await page.goto(url, {
+        waitUntil: "domcontentloaded",
+        timeout: timeoutMs,
+      });
+    } catch (error) {
+      // Some sites never finish navigation because a proxy, consent layer, or
+      // third-party request remains open. If Chromium has left about:blank,
+      // the document is still useful for parsing and the HTTP pass already
+      // provides the authoritative status/content fallback.
+      const navigationStarted = page.url() !== "about:blank";
+      const timedOut = error instanceof Error && error.name === "TimeoutError";
+      if (!timedOut || !navigationStarted) throw error;
+      consoleErrors.push(`Navigation timed out after ${timeoutMs}ms.`);
+    }
     if (collectVitals) await settle(page, timeoutMs);
     const vitals = collectVitals ? await readVitals(page, traffic) : null;
 
